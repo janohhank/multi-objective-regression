@@ -1,0 +1,44 @@
+{
+  "train_dataset": "../test_data/diabetes_modified.csv",
+  "target_feature": "Outcome",
+  "features": [
+    "Pregnancies",
+    "ln_pregnancies",
+    "Glucose",
+    "BloodPressure",
+    "SkinThickness",
+    "Insulin",
+    "ln_insulin",
+    "BMI",
+    "DiabetesPedigreeFunction",
+    "ln_diabetes_pedigree_function",
+    "Age",
+    "ln_age"
+  ],
+  "excluded_features": [
+    [
+      "ln_pregnancies",
+      "Pregnancies"
+    ],
+    [
+      "ln_insulin",
+      "Insulin"
+    ],
+    [
+      "ln_diabetes_pedigree_function",
+      "DiabetesPedigreeFunction"
+    ],
+    [
+      "ln_age",
+      "Age"
+    ]
+  ],
+  "allowed_features_count": 5,
+  "multi_objective_function_weights": {
+    "test_accuracy_weight": 1.0,
+    "test_precision_weight": 1.0,
+    "roc_auc_weight": 1.0,
+    "gini_score_weight": 1.0,
+    "coefficient_sign_diff_penalty_weight": 1.0
+  }
+}
