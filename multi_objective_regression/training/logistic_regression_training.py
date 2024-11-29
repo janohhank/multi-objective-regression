@@ -70,9 +70,9 @@ class LogisticRegressionTraining:
             coefficient_sign_diff_checks[feature] = (
                 covariance_to_target_feature[feature] * coefficient < 0
             )
-        coefficient_sign_diff_penalty: float = sum(
-            -0.1 for value in coefficient_sign_diff_checks.values() if value
-        )
+        coefficient_sign_diff_penalty: float = 1.0 - sum(
+            coefficient_sign_diff_checks.values()
+        ) / len(coefficient_sign_diff_checks)
 
         y_test_pred: typing.Any = log_regression.predict(
             x_test[training_setup.features]
