@@ -12,6 +12,7 @@ class TrainingParameters:
     excluded_features: typing.Optional[list[list[str]]] = None
     allowed_features_count: typing.Optional[int] = None
     select_top_n_training: typing.Optional[int] = None
+    mutation_and_crossover_iteration: typing.Optional[int] = None
     multi_objective_function_weights: typing.Optional[dict[str, float]] = None
 
     @staticmethod
@@ -33,6 +34,11 @@ class TrainingParameters:
             select_top_n_training=(
                 data["select_top_n_training"]
                 if "select_top_n_training" in data
+                else None
+            ),
+            mutation_and_crossover_iteration=(
+                data["mutation_and_crossover_iteration"]
+                if "mutation_and_crossover_iteration" in data
                 else None
             ),
             multi_objective_function_weights=(

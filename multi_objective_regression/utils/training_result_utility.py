@@ -7,7 +7,6 @@ from dto.training_result import TrainingResult
 
 
 class TrainingResultUtility(ABC):
-    __POPULATION_TRAINING_RESULT_DIR_NAME: str = "population_training_results"
 
     @staticmethod
     def get_top_n_training_results(
@@ -22,13 +21,34 @@ class TrainingResultUtility(ABC):
         )
 
     @staticmethod
+    def merge_training_results(
+        new_training_results: dict[int, TrainingResult],
+        merge_to: dict[int, TrainingResult],
+    ) -> dict[int, TrainingResult]:
+        for index, training_result in new_training_results.items():
+            if (
+                merge_to[list(merge_to.keys())[-1]].multi_objective_score
+                < training_result.multi_objective_score
+            ):
+                merge_to.popitem()
+                merge_to[index] = training_result
+            merge_to = dict(
+                sorted(
+                    merge_to.items(),
+                    key=lambda item: item[1].multi_objective_score,
+                    reverse=True,
+                )
+            )
+        return merge_to
+
+    @staticmethod
     def save_training_results(
-        training_datetime: str, training_results: dict[int, TrainingResult]
+        training_datetime: str, folder: str, training_results: dict[int, TrainingResult]
     ) -> None:
         os.makedirs(
             os.path.join(
                 training_datetime,
-                TrainingResultUtility.__POPULATION_TRAINING_RESULT_DIR_NAME,
+                folder,
             )
         )
 
@@ -36,7 +56,7 @@ class TrainingResultUtility(ABC):
             with open(
                 os.path.join(
                     training_datetime,
-                    TrainingResultUtility.__POPULATION_TRAINING_RESULT_DIR_NAME,
+                    folder,
                     str(index) + "_result.json",
                 ),
                 "w",
