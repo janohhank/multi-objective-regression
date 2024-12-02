@@ -100,6 +100,7 @@ class LogisticRegressionTraining:
 
         return TrainingResult(
             index,
+            training_setup,
             coefficients,
             coefficient_sign_diff_checks,
             float(log_regression.intercept_[0]),

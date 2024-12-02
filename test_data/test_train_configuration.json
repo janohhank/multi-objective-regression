@@ -34,6 +34,7 @@
     ]
   ],
   "allowed_features_count": 5,
+  "select_top_n_training": 5,
   "multi_objective_function_weights": {
     "test_accuracy_weight": 1.0,
     "test_precision_weight": 1.0,

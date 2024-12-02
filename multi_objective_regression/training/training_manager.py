@@ -4,7 +4,6 @@ from typing import Any
 import pandas
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
-from dto.training_setup import TrainingSetup
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -14,22 +13,21 @@ from training.logistic_regression_training import (
 
 
 class TrainingManager:
-    __logistic_regression_training: LogisticRegressionTraining = None
     __training_parameters: TrainingParameters = None
-    __training_setups: dict[int, TrainingSetup] = None
+    __logistic_regression_training: LogisticRegressionTraining = None
 
     def __init__(
         self,
         training_parameters: TrainingParameters,
-        training_setups: dict[int, TrainingSetup],
     ):
-        self.__logistic_regression_training = LogisticRegressionTraining(
-            training_parameters
-        )
         self.__training_parameters = training_parameters
-        self.__training_setups = training_setups
+        self.__logistic_regression_training = LogisticRegressionTraining(
+            self.__training_parameters
+        )
 
-    def start_training(self) -> dict[int, TrainingResult]:
+    def start_training(
+        self, training_setups: dict[int, TrainingResult]
+    ) -> dict[int, TrainingResult]:
         start: float = time.perf_counter()
 
         print("Loading train dataset.")
@@ -65,7 +63,7 @@ class TrainingManager:
 
         print("Start multi-objective regression training.")
         train_results = {}
-        for index, training_setup in self.__training_setups.items():
+        for index, training_setup in training_setups.items():
             train_results[index] = self.__logistic_regression_training.train(
                 index,
                 training_setup,

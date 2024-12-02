@@ -1,9 +1,12 @@
 from dataclasses import dataclass
 
+from dto.training_setup import TrainingSetup
+
 
 @dataclass
 class TrainingResult:
     index: int
+    training_setup: TrainingSetup
     coefficients: dict[str, float]
     coefficient_sign_diff_checks: dict[str, bool]
     interception: float
