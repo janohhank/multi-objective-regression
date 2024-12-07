@@ -21,6 +21,7 @@ class PlotUtility(ABC):
         keys = list(sorted_data.keys())
         values = [item.multi_objective_score for item in sorted_data.values()]
 
+        plt.figure(figsize=(10, 6))
         seaborn.barplot(x=keys, y=values, order=keys)
         plt.xlabel("Training Index")
         plt.ylabel("Multi-objective Score")

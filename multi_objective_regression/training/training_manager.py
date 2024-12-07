@@ -112,7 +112,10 @@ class TrainingManager:
         for _ in range(self.__training_parameters.mutation_and_crossover_iteration):
             new_training_index += 1
 
-            if random.uniform(0, 1) < 0.5:
+            if (
+                random.uniform(0, 1)
+                < self.__training_parameters.mutation_and_crossover_balance
+            ):
                 new_training_setup: TrainingResult = (
                     self.__mutation_crossover_manager.features_mutation(
                         new_training_index,

@@ -13,6 +13,7 @@ class TrainingParameters:
     initial_training_feature_sets_count: typing.Optional[int] = None
     initial_training_top_n_selection_count: typing.Optional[int] = None
     mutation_and_crossover_iteration: typing.Optional[int] = None
+    mutation_and_crossover_balance: typing.Optional[float] = None
     mutation_feature_change_probability: typing.Optional[float] = None
     crossover_feature_selection_probability: typing.Optional[float] = None
     multi_objective_function_weights: typing.Optional[dict[str, float]] = None
@@ -41,6 +42,11 @@ class TrainingParameters:
             mutation_and_crossover_iteration=(
                 data["mutation_and_crossover_iteration"]
                 if "mutation_and_crossover_iteration" in data
+                else None
+            ),
+            mutation_and_crossover_balance=(
+                data["mutation_and_crossover_balance"]
+                if "mutation_and_crossover_balance" in data
                 else None
             ),
             mutation_feature_change_probability=(
