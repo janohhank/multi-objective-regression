@@ -22,24 +22,26 @@ class TrainingResultUtility(ABC):
 
     @staticmethod
     def merge_training_results(
-        new_training_results: dict[int, TrainingResult],
-        merge_to: dict[int, TrainingResult],
+        new_training_index: int,
+        new_training_result: TrainingResult,
+        training_results: dict[int, TrainingResult],
     ) -> dict[int, TrainingResult]:
-        for index, training_result in new_training_results.items():
-            if (
-                merge_to[list(merge_to.keys())[-1]].multi_objective_score
-                < training_result.multi_objective_score
-            ):
-                merge_to.popitem()
-                merge_to[index] = training_result
-            merge_to = dict(
-                sorted(
-                    merge_to.items(),
-                    key=lambda item: item[1].multi_objective_score,
-                    reverse=True,
-                )
+        training_results = dict(
+            sorted(
+                training_results.items(),
+                key=lambda item: item[1].multi_objective_score,
+                reverse=True,
             )
-        return merge_to
+        )
+
+        if (
+            training_results[list(training_results.keys())[-1]].multi_objective_score
+            < new_training_result.multi_objective_score
+        ):
+            training_results.pop(list(training_results.keys())[-1])
+            training_results[new_training_index] = new_training_result
+
+        return training_results
 
     @staticmethod
     def save_training_results(

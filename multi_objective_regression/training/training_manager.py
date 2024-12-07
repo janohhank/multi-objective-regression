@@ -12,14 +12,14 @@ from sklearn.preprocessing import StandardScaler
 from training.logistic_regression_training import (
     LogisticRegressionTraining,
 )
-from training.mutation_crossover import MutationCrossover
+from training.mutation_crossover_manager import MutationCrossoverManager
 from utils.training_result_utility import TrainingResultUtility
 
 
 class TrainingManager:
     __training_parameters: TrainingParameters = None
     __logistic_regression_training: LogisticRegressionTraining = None
-    __mutation_crossover: MutationCrossover = None
+    __mutation_crossover_manager: MutationCrossoverManager = None
 
     __scaled_x_train: DataFrame = None
     __y_train: DataFrame = None
@@ -35,7 +35,13 @@ class TrainingManager:
         self.__logistic_regression_training = LogisticRegressionTraining(
             self.__training_parameters
         )
-        self.__mutation_crossover = MutationCrossover()
+        self.__mutation_crossover_manager = MutationCrossoverManager(
+            self.__training_parameters
+        )
+
+    def __get_standardization_scaler(self, dataset: DataFrame) -> Any:
+        standard_scaler = StandardScaler()
+        return standard_scaler.fit(dataset)
 
     def prepare_dataset(self):
         print("Loading train dataset.")
@@ -74,7 +80,9 @@ class TrainingManager:
     ) -> dict[int, TrainingResult]:
         start: float = time.perf_counter()
 
-        print("Start multi-objective regression training.")
+        print(
+            f"Start multi-objective logistic regression training on {len(training_setups)} training setups."
+        )
         train_results = {}
         for index, training_setup in training_setups.items():
             train_results[index] = self.__logistic_regression_training.train(
@@ -92,41 +100,45 @@ class TrainingManager:
         return train_results
 
     def start_mutation_and_crossover(
-        self, start_index: int, population_top_n_results: dict[int, TrainingResult]
+        self,
+        current_training_index: int,
+        initial_training_top_n_results: dict[int, TrainingResult],
     ) -> dict[int, TrainingResult]:
         final_training_results: dict[int, TrainingResult] = deepcopy(
-            population_top_n_results
+            initial_training_top_n_results
         )
 
-        new_train_index: int = start_index + 1
+        new_training_index: int = current_training_index
         for _ in range(self.__training_parameters.mutation_and_crossover_iteration):
-            training_setups = {}
-            for index, training_result in population_top_n_results.items():
-                if random.uniform(0, 1) < 0.5:
-                    current_result: TrainingResult = (
-                        self.__mutation_crossover.features_mutation(training_result)
+            new_training_index += 1
+
+            if random.uniform(0, 1) < 0.5:
+                new_training_setup: TrainingResult = (
+                    self.__mutation_crossover_manager.features_mutation(
+                        new_training_index,
+                        random.choice(list(final_training_results.values())),
                     )
-                    if current_result is not None:
-                        training_setups[new_train_index] = current_result
-                else:
-                    current_result: TrainingResult = (
-                        self.__mutation_crossover.features_crossover(
-                            training_result,
-                            random.choice(list(population_top_n_results.values())),
-                        )
+                )
+            else:
+                new_training_setup: TrainingResult = (
+                    self.__mutation_crossover_manager.features_crossover(
+                        new_training_index,
+                        random.choice(list(final_training_results.values())),
+                        random.choice(list(final_training_results.values())),
                     )
-                    training_setups[new_train_index] = current_result
-                new_train_index += 1
+                )
+
+            if new_training_setup is None:
+                continue
 
             training_results: dict[int, TrainingResult] = self.start_training(
-                training_setups
+                {new_training_index: new_training_setup}
             )
-            TrainingResultUtility.merge_training_results(
-                training_results, final_training_results
+            final_training_results: dict[int, TrainingResult] = (
+                TrainingResultUtility.merge_training_results(
+                    new_training_index,
+                    training_results[new_training_index],
+                    final_training_results,
+                )
             )
-
         return final_training_results
-
-    def __get_standardization_scaler(self, dataset: DataFrame) -> Any:
-        standard_scaler = StandardScaler()
-        return standard_scaler.fit(dataset)

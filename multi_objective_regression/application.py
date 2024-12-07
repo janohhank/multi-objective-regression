@@ -19,10 +19,8 @@ from utils.training_result_utility import (
 
 
 class MultiObjectiveRegressionApplication:
-    __POPULATION_TRAINING_RESULT_DIR_NAME: str = "population_training_results"
-    __POPULATION_TOP_N_TRAINING_RESULT_DIR_NAME: str = (
-        "population_top_n_training_results"
-    )
+    __INITIAL_TRAINING_RESULT_DIR_NAME: str = "initial_training_results"
+    __INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME: str = "initial_top_n_training_results"
     __FINAL_TRAINING_RESULT_DIR_NAME: str = "final_training_results"
 
     __training_parameters: TrainingParameters = None
@@ -41,15 +39,15 @@ class MultiObjectiveRegressionApplication:
         training_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         os.makedirs(training_datetime)
 
-        print("Generate population.")
+        print("Generating initial training setups.")
         training_setups: dict[int, TrainingSetup] = (
             TrainingSetupGenerator.generate_training_setups(self.__training_parameters)
         )
 
-        print("Prepare train dataset.")
+        print("Prepare train and test datasets.")
         self.__training_manager.prepare_dataset()
 
-        print("Start training on population.")
+        print("Starting initial training.")
         training_results: dict[int, TrainingResult] = (
             self.__training_manager.start_training(training_setups)
         )
@@ -58,28 +56,29 @@ class MultiObjectiveRegressionApplication:
         )
 
         print(
-            f"Save top {self.__training_parameters.select_top_n_training} training results."
+            f"Save top {self.__training_parameters.initial_training_top_n_selection_count} initial training results."
         )
         top_training_results: dict[int, TrainingResult] = (
             TrainingResultUtility.get_top_n_training_results(
-                training_results, self.__training_parameters.select_top_n_training
+                training_results,
+                self.__training_parameters.initial_training_top_n_selection_count,
             )
         )
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveRegressionApplication.__POPULATION_TRAINING_RESULT_DIR_NAME,
+            MultiObjectiveRegressionApplication.__INITIAL_TRAINING_RESULT_DIR_NAME,
             training_results,
         )
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveRegressionApplication.__POPULATION_TOP_N_TRAINING_RESULT_DIR_NAME,
+            MultiObjectiveRegressionApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
             top_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
             training_datetime, "top_n", top_training_results
         )
 
-        print("Start mutation and crossover.")
+        print("Starting mutation and crossover training.")
         final_training_results: dict[int, TrainingResult] = (
             self.__training_manager.start_mutation_and_crossover(
                 len(training_setups) + 1, top_training_results

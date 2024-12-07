@@ -26,15 +26,15 @@ class TrainingSetupGenerator(ABC):
         all_feature_combinations: list[tuple] = list(
             itertools.combinations(
                 training_parameters.features,
-                training_parameters.allowed_features_count,
+                training_parameters.initial_training_feature_sets_count,
             )
         )
 
         index: int = 1
         for combination in all_feature_combinations:
-            if len(training_parameters.excluded_features) > 0:
+            if len(training_parameters.excluded_feature_sets) > 0:
                 skip: bool = False
-                for exclusion_tuple in training_parameters.excluded_features:
+                for exclusion_tuple in training_parameters.excluded_feature_sets:
                     if set(exclusion_tuple).issubset(set(combination)):
                         skip = True
 
