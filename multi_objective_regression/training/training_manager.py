@@ -1,5 +1,6 @@
 import random
 import time
+from collections import Counter
 from copy import deepcopy
 from typing import Any
 
@@ -95,7 +96,7 @@ class TrainingManager:
                 self.__y_test,
             )
         elapsed: float = time.perf_counter() - start
-        print(f"Whole training done in {elapsed} seconds.")
+        print(f"Whole training done in {(elapsed * 1000):.2f} seconds.")
 
         return train_results
 
@@ -132,6 +133,16 @@ class TrainingManager:
                 )
 
             if new_training_setup is None:
+                continue
+
+            found_same = False
+            for training_result in final_training_results.values():
+                if Counter(training_result.training_setup.features) == Counter(
+                    new_training_setup.features
+                ):
+                    found_same = True
+                    break
+            if found_same:
                 continue
 
             training_results: dict[int, TrainingResult] = self.start_training(

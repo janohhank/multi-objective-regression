@@ -28,6 +28,7 @@ class MutationCrossoverManager:
                     new_training_setup.features.remove(feature)
                 else:
                     new_training_setup.features.append(feature)
+
         return new_training_setup
 
     def features_crossover(

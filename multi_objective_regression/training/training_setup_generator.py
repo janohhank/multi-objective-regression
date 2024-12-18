@@ -19,6 +19,9 @@ class TrainingSetupGenerator(ABC):
 
         return training_setups
 
+    # milyen valószínűséggel kerüljön be egy feautre az alap training set-be ehhez egy prob parameter
+    # itt is figyelni, hogy ne legyen duplikátum, kizárási feltételekre
+    # new variable max_initial_training_count = 1000
     @staticmethod
     def __generate_feature_combinations(
         training_parameters: TrainingParameters, training_setups

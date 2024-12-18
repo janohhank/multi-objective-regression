@@ -35,7 +35,7 @@
   ],
   "initial_training_feature_sets_count": 5,
   "initial_training_top_n_selection_count": 20,
-  "mutation_and_crossover_iteration": 100,
+  "mutation_and_crossover_iteration": 1000,
   "mutation_and_crossover_balance": 0.5,
   "mutation_feature_change_probability": 0.3,
   "crossover_feature_selection_probability": 0.5,

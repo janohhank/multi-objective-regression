@@ -68,3 +68,19 @@ class TrainingResultUtility(ABC):
                         dataclasses.asdict(training_result), indent=4, default=str
                     )
                 )
+
+    @staticmethod
+    def save_training_results_report(
+        training_datetime: str, training_results: dict[int, TrainingResult]
+    ) -> None:
+        with open(
+            os.path.join(
+                training_datetime,
+                "top_results_report.txt",
+            ),
+            "w",
+        ) as file:
+            for index, training_result in training_results.items():
+                file.write(
+                    f"{index},{training_result.multi_objective_score},[{training_result.training_setup.features}]\n"
+                )

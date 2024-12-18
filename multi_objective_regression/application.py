@@ -91,6 +91,10 @@ class MultiObjectiveRegressionApplication:
             MultiObjectiveRegressionApplication.__FINAL_TRAINING_RESULT_DIR_NAME,
             final_training_results,
         )
+        TrainingResultUtility.save_training_results_report(
+            training_datetime,
+            final_training_results,
+        )
         PlotUtility.plot_training_multi_objective_scores(
             training_datetime, "final_top_n", final_training_results
         )
