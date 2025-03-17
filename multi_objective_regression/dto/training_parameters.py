@@ -10,7 +10,8 @@ class TrainingParameters:
     target_feature: typing.Optional[str] = None
     features: typing.Optional[list[str]] = None
     excluded_feature_sets: typing.Optional[list[list[str]]] = None
-    initial_training_feature_sets_count: typing.Optional[int] = None
+    initial_training_setup_generator_type: typing.Optional[str] = None
+    initial_training_setup_count: typing.Optional[int] = None
     initial_training_top_n_selection_count: typing.Optional[int] = None
     mutation_and_crossover_iteration: typing.Optional[int] = None
     mutation_and_crossover_balance: typing.Optional[float] = None
@@ -29,9 +30,14 @@ class TrainingParameters:
             excluded_feature_sets=(
                 data["excluded_feature_sets"] if "excluded_feature_sets" in data else []
             ),
-            initial_training_feature_sets_count=(
-                data["initial_training_feature_sets_count"]
-                if "initial_training_feature_sets_count" in data
+            initial_training_setup_generator_type=(
+                data["initial_training_setup_generator_type"]
+                if "initial_training_setup_generator_type" in data
+                else None
+            ),
+            initial_training_setup_count=(
+                data["initial_training_setup_count"]
+                if "initial_training_setup_count" in data
                 else None
             ),
             initial_training_top_n_selection_count=(

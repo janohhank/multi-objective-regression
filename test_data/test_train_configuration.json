@@ -33,7 +33,8 @@
       "Age"
     ]
   ],
-  "initial_training_feature_sets_count": 5,
+  "initial_training_setup_generator_type": "RANDOM_COMBINATIONS",
+  "initial_training_setup_count": 100,
   "initial_training_top_n_selection_count": 20,
   "mutation_and_crossover_iteration": 1000,
   "mutation_and_crossover_balance": 0.5,

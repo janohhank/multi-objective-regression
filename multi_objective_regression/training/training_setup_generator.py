@@ -1,4 +1,5 @@
 import itertools
+import random
 from abc import ABC
 
 from dto.training_parameters import TrainingParameters
@@ -6,30 +7,39 @@ from dto.training_setup import TrainingSetup
 
 
 class TrainingSetupGenerator(ABC):
+    __MIN_NUMBER_OF_FEATURES: int = 4
 
     @staticmethod
     def generate_training_setups(
         training_parameters: TrainingParameters,
     ) -> dict[int, TrainingSetup]:
         training_setups = {}
-
-        TrainingSetupGenerator.__generate_feature_combinations(
-            training_parameters, training_setups
-        )
-
+        match training_parameters.initial_training_setup_generator_type:
+            case "ALL_COMBINATIONS":
+                training_setups = (
+                    TrainingSetupGenerator.__generate_all_feature_combinations(
+                        training_parameters
+                    )
+                )
+            case "RANDOM_COMBINATIONS":
+                training_setups = (
+                    TrainingSetupGenerator.__generate_n_random_feature_combinations(
+                        training_parameters
+                    )
+                )
         return training_setups
 
-    # milyen valószínűséggel kerüljön be egy feautre az alap training set-be ehhez egy prob parameter
-    # itt is figyelni, hogy ne legyen duplikátum, kizárási feltételekre
-    # new variable max_initial_training_count = 1000
+    # deprecated
     @staticmethod
-    def __generate_feature_combinations(
-        training_parameters: TrainingParameters, training_setups
-    ) -> None:
+    def __generate_all_feature_combinations(
+        training_parameters: TrainingParameters,
+    ) -> dict[int, TrainingSetup]:
+        training_setups = {}
+
         all_feature_combinations: list[tuple] = list(
             itertools.combinations(
                 training_parameters.features,
-                training_parameters.initial_training_feature_sets_count,
+                TrainingSetupGenerator.__MIN_NUMBER_OF_FEATURES,
             )
         )
 
@@ -46,3 +56,38 @@ class TrainingSetupGenerator(ABC):
 
             training_setups[index] = TrainingSetup(index, list(combination))
             index = index + 1
+
+        return training_setups
+
+    @staticmethod
+    def __generate_n_random_feature_combinations(
+        training_parameters: TrainingParameters,
+    ) -> dict[int, TrainingSetup]:
+        training_setups = {}
+
+        index: int = 1
+        used_combinations = set()
+        while len(training_setups) < training_parameters.initial_training_setup_count:
+            size = random.choice(
+                range(
+                    TrainingSetupGenerator.__MIN_NUMBER_OF_FEATURES,
+                    len(training_parameters.features) + 1,
+                )
+            )
+            combination = tuple(random.sample(training_parameters.features, size))
+
+            if combination not in used_combinations:
+                used_combinations.add(combination)
+
+                skip: bool = False
+                for exclusion_tuple in training_parameters.excluded_feature_sets:
+                    if set(exclusion_tuple).issubset(set(combination)):
+                        skip = True
+
+                if skip:
+                    continue
+
+                training_setups[index] = TrainingSetup(index, list(combination))
+                index = index + 1
+
+        return training_setups

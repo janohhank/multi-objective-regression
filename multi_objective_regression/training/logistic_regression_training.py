@@ -4,8 +4,10 @@ import typing
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
+from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, precision_score, roc_auc_score
+from sklearn.preprocessing import StandardScaler
 
 
 class LogisticRegressionTraining:
@@ -58,8 +60,23 @@ class LogisticRegressionTraining:
     ) -> TrainingResult:
         start: float = time.perf_counter()
 
+        # Reduced train datasets.
+        x_train_reduced = x_train[training_setup.features]
+        x_test_reduced = x_test[training_setup.features]
+
+        # Create z-score standardization scaler from train dataset.
+        scaler = LogisticRegressionTraining.__get_standardization_scaler(
+            x_train_reduced
+        )
+
+        # Standardize train dataset.
+        scaled_x_train = scaler.transform(x_train_reduced)
+
+        # Standardize test dataset.
+        scaled_x_test = scaler.transform(x_test_reduced)
+
         log_regression = LogisticRegression()
-        log_regression.fit(x_train[training_setup.features], y_train)
+        log_regression.fit(scaled_x_train, y_train)
 
         coefficients: dict[str, float] = dict(
             zip(training_setup.features, log_regression.coef_[0])
@@ -74,15 +91,11 @@ class LogisticRegressionTraining:
             coefficient_sign_diff_checks.values()
         ) / len(coefficient_sign_diff_checks)
 
-        y_test_pred: typing.Any = log_regression.predict(
-            x_test[training_setup.features]
-        )
+        y_test_pred: typing.Any = log_regression.predict(scaled_x_test)
         test_accuracy: float = accuracy_score(y_test, y_test_pred)
         test_precision: float = precision_score(y_test, y_test_pred)
 
-        y_probs: typing.Any = log_regression.predict_proba(
-            x_test[training_setup.features]
-        )[:, 1]
+        y_probs: typing.Any = log_regression.predict_proba(scaled_x_test)[:, 1]
         roc_auc: float = roc_auc_score(y_test, y_probs)
 
         gini_score: float = 2 * roc_auc - 1
@@ -113,3 +126,8 @@ class LogisticRegressionTraining:
             multi_objective_score,
             elapsed,
         )
+
+    @staticmethod
+    def __get_standardization_scaler(dataset: DataFrame) -> typing.Any:
+        standard_scaler = StandardScaler()
+        return standard_scaler.fit(dataset)

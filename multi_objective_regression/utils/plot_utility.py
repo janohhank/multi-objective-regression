@@ -32,3 +32,16 @@ class PlotUtility(ABC):
             dpi=300,
         )
         plt.clf()
+
+    @staticmethod
+    def plot_correlation_matrix(folder: str, correlation_matrix) -> None:
+        plt.figure(figsize=(10, 14))
+        seaborn.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
+        plt.title("Correlation Matrix")
+        plt.savefig(
+            os.path.join(folder, "correlation_matrix.png"),
+            format="png",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()

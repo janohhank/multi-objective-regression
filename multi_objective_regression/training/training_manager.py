@@ -2,14 +2,12 @@ import random
 import time
 from collections import Counter
 from copy import deepcopy
-from typing import Any
 
 import pandas
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from training.logistic_regression_training import (
     LogisticRegressionTraining,
 )
@@ -19,14 +17,20 @@ from utils.training_result_utility import TrainingResultUtility
 
 class TrainingManager:
     __training_parameters: TrainingParameters = None
+
+    # Supervised machine learning trainer
     __logistic_regression_training: LogisticRegressionTraining = None
+    # Meta training component with genetic algorithm
     __mutation_crossover_manager: MutationCrossoverManager = None
 
-    __scaled_x_train: DataFrame = None
+    __x_train: DataFrame = None
     __y_train: DataFrame = None
-    __scaled_x_test: DataFrame = None
+
+    __x_test: DataFrame = None
     __y_test: DataFrame = None
-    __covariance_to_target_feature: DataFrame = None
+
+    __correlation_matrix = None
+    __correlation_to_target_feature: DataFrame = None
 
     def __init__(
         self,
@@ -40,9 +44,8 @@ class TrainingManager:
             self.__training_parameters
         )
 
-    def __get_standardization_scaler(self, dataset: DataFrame) -> Any:
-        standard_scaler = StandardScaler()
-        return standard_scaler.fit(dataset)
+    def get_correlation_matrix(self):
+        return self.__correlation_matrix
 
     def prepare_dataset(self):
         print("Loading train dataset.")
@@ -50,31 +53,16 @@ class TrainingManager:
         x: DataFrame = dataset.drop(self.__training_parameters.target_feature, axis=1)
         y: DataFrame = dataset[self.__training_parameters.target_feature].astype(int)
 
-        print("Calculate covariance matrix from standardized dataset.")
-        full_dataset_scaler = self.__get_standardization_scaler(dataset)
-        scaled_dataset = DataFrame(
-            full_dataset_scaler.transform(dataset), columns=dataset.columns
-        )
-        covariance_matrix = scaled_dataset.cov()
-        self.__covariance_to_target_feature: DataFrame = covariance_matrix[
+        print("Calculate correlation matrix.")
+        self.__correlation_matrix = dataset.corr()
+        self.__correlation_to_target_feature: DataFrame = self.__correlation_matrix[
             self.__training_parameters.target_feature
         ]
 
         print("Split train dataset into train and test.")
-        x_train, x_test, self.__y_train, self.__y_test = train_test_split(
+        self.__x_train, self.__x_test, self.__y_train, self.__y_test = train_test_split(
             x, y, test_size=0.2, stratify=y, random_state=42
         )
-
-        print("Create z-score standardization scaler from train dataset.")
-        scaler = self.__get_standardization_scaler(x_train)
-
-        print("Standardize train dataset.")
-        scaled_x_train = scaler.transform(x_train)
-        self.__scaled_x_train = DataFrame(scaled_x_train, columns=x_train.columns)
-
-        print("Standardize test dataset.")
-        scaled_x_test = scaler.transform(x_test)
-        self.__scaled_x_test = DataFrame(scaled_x_test, columns=x_test.columns)
 
     def start_training(
         self, training_setups: dict[int, TrainingResult]
@@ -89,10 +77,10 @@ class TrainingManager:
             train_results[index] = self.__logistic_regression_training.train(
                 index,
                 training_setup,
-                self.__covariance_to_target_feature,
-                self.__scaled_x_train,
+                self.__correlation_to_target_feature,
+                self.__x_train,
                 self.__y_train,
-                self.__scaled_x_test,
+                self.__x_test,
                 self.__y_test,
             )
         elapsed: float = time.perf_counter() - start

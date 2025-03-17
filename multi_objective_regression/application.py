@@ -18,10 +18,10 @@ from utils.training_result_utility import (
 )
 
 
-class MultiObjectiveRegressionApplication:
+class MultiObjectiveTrainingApplication:
     __INITIAL_TRAINING_RESULT_DIR_NAME: str = "initial_training_results"
     __INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME: str = "initial_top_n_training_results"
-    __FINAL_TRAINING_RESULT_DIR_NAME: str = "final_training_results"
+    __FINAL_TRAINING_RESULT_DIR_NAME: str = "final_top_n_training_results"
 
     __training_parameters: TrainingParameters = None
     __training_manager: TrainingManager = None
@@ -46,6 +46,9 @@ class MultiObjectiveRegressionApplication:
 
         print("Prepare train and test datasets.")
         self.__training_manager.prepare_dataset()
+        PlotUtility.plot_correlation_matrix(
+            training_datetime, self.__training_manager.get_correlation_matrix()
+        )
 
         print("Starting initial training.")
         training_results: dict[int, TrainingResult] = (
@@ -66,12 +69,12 @@ class MultiObjectiveRegressionApplication:
         )
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveRegressionApplication.__INITIAL_TRAINING_RESULT_DIR_NAME,
+            MultiObjectiveTrainingApplication.__INITIAL_TRAINING_RESULT_DIR_NAME,
             training_results,
         )
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveRegressionApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
+            MultiObjectiveTrainingApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
             top_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
@@ -88,7 +91,7 @@ class MultiObjectiveRegressionApplication:
         print("Save final training results.")
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveRegressionApplication.__FINAL_TRAINING_RESULT_DIR_NAME,
+            MultiObjectiveTrainingApplication.__FINAL_TRAINING_RESULT_DIR_NAME,
             final_training_results,
         )
         TrainingResultUtility.save_training_results_report(
@@ -101,18 +104,18 @@ class MultiObjectiveRegressionApplication:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Multi objective regression training.")
+    parser = argparse.ArgumentParser(description="Multi-objective training.")
     parser.add_argument(
         "--training_parameters_path",
         type=str,
         required=True,
-        help="Training parameters descriptor file (JSON file).",
+        help="Training parameters descriptor (JSON) file.",
     )
 
     args = parser.parse_args()
 
-    application: MultiObjectiveRegressionApplication = (
-        MultiObjectiveRegressionApplication(args.training_parameters_path)
+    application: MultiObjectiveTrainingApplication = MultiObjectiveTrainingApplication(
+        args.training_parameters_path
     )
     application.start_training()
 
