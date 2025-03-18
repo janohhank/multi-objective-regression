@@ -75,7 +75,9 @@ class LogisticRegressionTraining:
         # Standardize test dataset.
         scaled_x_test = scaler.transform(x_test_reduced)
 
-        log_regression = LogisticRegression()
+        log_regression = LogisticRegression(
+            n_jobs=4, penalty="l2", C=1.0, solver="lbfgs", max_iter=1024
+        )
         log_regression.fit(scaled_x_train, y_train)
 
         coefficients: dict[str, float] = dict(
