@@ -35,16 +35,16 @@
   ],
   "initial_training_setup_generator_type": "RANDOM_COMBINATIONS",
   "initial_training_setup_count": 256,
-  "initial_training_top_n_selection_count": 20,
-  "mutation_and_crossover_iteration": 2048,
+  "initial_training_top_n_selection_count": 16,
+  "mutation_and_crossover_iteration": 4048,
   "mutation_and_crossover_balance": 0.5,
   "mutation_feature_change_probability": 0.3,
   "crossover_feature_selection_probability": 0.5,
   "multi_objective_function_weights": {
-    "accuracy_weight": 0.2,
-    "precision_weight": 0.2,
-    "roc_auc_weight": 0.2,
-    "gini_score_weight": 0.2,
-    "coefficient_sign_diff_penalty_weight": 0.2
+    "accuracy_weight": 0.0,
+    "precision_weight": 0.0,
+    "roc_auc_weight": 5.0,
+    "gini_score_weight": 0.0,
+    "coefficient_sign_diff_penalty_weight": 0.5
   }
 }

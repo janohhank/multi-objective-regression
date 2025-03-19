@@ -63,13 +63,29 @@ class TrainingManager:
 
         print("Split dataset into train, validation and test.")
         self.__x_train, x_temp, self.__y_train, y_temp = train_test_split(
-            x, y, test_size=0.4, stratify=y, random_state=42
+            x, y, test_size=0.3, stratify=y, random_state=42
         )
 
         self.__x_validation, self.__x_test, self.__y_validation, self.__y_test = (
             train_test_split(
                 x_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42
             )
+        )
+
+        print(
+            "Train class distribution:",
+            {label: sum(self.__y_train == label) for label in set(self.__y_train)},
+        )
+        print(
+            "Validation class distribution:",
+            {
+                label: sum(self.__y_validation == label)
+                for label in set(self.__y_validation)
+            },
+        )
+        print(
+            "Test class distribution:",
+            {label: sum(self.__y_test == label) for label in set(self.__y_test)},
         )
 
     def start_training(
