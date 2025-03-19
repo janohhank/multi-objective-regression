@@ -1,5 +1,4 @@
 import random
-import time
 from collections import Counter
 from copy import deepcopy
 
@@ -25,6 +24,9 @@ class TrainingManager:
 
     __x_train: DataFrame = None
     __y_train: DataFrame = None
+
+    __x_validation: DataFrame = None
+    __y_validation: DataFrame = None
 
     __x_test: DataFrame = None
     __y_test: DataFrame = None
@@ -59,19 +61,20 @@ class TrainingManager:
             self.__training_parameters.target_feature
         ]
 
-        print("Split train dataset into train and test.")
-        self.__x_train, self.__x_test, self.__y_train, self.__y_test = train_test_split(
-            x, y, test_size=0.2, stratify=y, random_state=42
+        print("Split dataset into train, validation and test.")
+        self.__x_train, x_temp, self.__y_train, y_temp = train_test_split(
+            x, y, test_size=0.4, stratify=y, random_state=42
+        )
+
+        self.__x_validation, self.__x_test, self.__y_validation, self.__y_test = (
+            train_test_split(
+                x_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42
+            )
         )
 
     def start_training(
         self, training_setups: dict[int, TrainingResult]
     ) -> dict[int, TrainingResult]:
-        start: float = time.perf_counter()
-
-        print(
-            f"Start multi-objective logistic regression training on {len(training_setups)} training setups."
-        )
         train_results = {}
         for index, training_setup in training_setups.items():
             train_results[index] = self.__logistic_regression_training.train(
@@ -80,20 +83,20 @@ class TrainingManager:
                 self.__correlation_to_target_feature,
                 self.__x_train,
                 self.__y_train,
+                self.__x_validation,
+                self.__y_validation,
                 self.__x_test,
                 self.__y_test,
             )
-        elapsed: float = time.perf_counter() - start
-        print(f"Whole training done in {(elapsed * 1000):.2f} seconds.")
-
         return train_results
 
     def start_mutation_and_crossover(
         self,
         current_training_index: int,
         initial_training_top_n_results: dict[int, TrainingResult],
-    ) -> dict[int, TrainingResult]:
-        final_training_results: dict[int, TrainingResult] = deepcopy(
+        all_training_results: dict[int, TrainingResult],
+    ) -> (dict[int, TrainingResult], dict[int, TrainingResult]):
+        final_top_n_training_results: dict[int, TrainingResult] = deepcopy(
             initial_training_top_n_results
         )
 
@@ -108,23 +111,23 @@ class TrainingManager:
                 new_training_setup: TrainingResult = (
                     self.__mutation_crossover_manager.features_mutation(
                         new_training_index,
-                        random.choice(list(final_training_results.values())),
+                        random.choice(list(final_top_n_training_results.values())),
                     )
                 )
             else:
                 new_training_setup: TrainingResult = (
                     self.__mutation_crossover_manager.features_crossover(
                         new_training_index,
-                        random.choice(list(final_training_results.values())),
-                        random.choice(list(final_training_results.values())),
+                        random.choice(list(final_top_n_training_results.values())),
+                        random.choice(list(final_top_n_training_results.values())),
                     )
                 )
 
-            if new_training_setup is None:
+            if new_training_setup is None or not new_training_setup.features:
                 continue
 
             found_same = False
-            for training_result in final_training_results.values():
+            for training_result in all_training_results.values():
                 if Counter(training_result.training_setup.features) == Counter(
                     new_training_setup.features
                 ):
@@ -136,11 +139,14 @@ class TrainingManager:
             training_results: dict[int, TrainingResult] = self.start_training(
                 {new_training_index: new_training_setup}
             )
-            final_training_results: dict[int, TrainingResult] = (
+            all_training_results[new_training_index] = training_results[
+                new_training_index
+            ]
+            final_top_n_training_results: dict[int, TrainingResult] = (
                 TrainingResultUtility.merge_training_results(
                     new_training_index,
                     training_results[new_training_index],
-                    final_training_results,
+                    final_top_n_training_results,
                 )
             )
-        return final_training_results
+        return final_top_n_training_results, all_training_results

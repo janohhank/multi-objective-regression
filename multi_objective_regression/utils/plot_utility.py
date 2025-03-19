@@ -14,12 +14,16 @@ class PlotUtility(ABC):
     ) -> None:
         sorted_data = dict(
             sorted(
-                training_results.items(), key=lambda item: item[1].multi_objective_score
+                training_results.items(),
+                key=lambda item: item[1].validation_results["multi_objective_score"],
             )
         )
 
         keys = list(sorted_data.keys())
-        values = [item.multi_objective_score for item in sorted_data.values()]
+        values = [
+            item.validation_results["multi_objective_score"]
+            for item in sorted_data.values()
+        ]
 
         plt.figure(figsize=(10, 6))
         seaborn.barplot(x=keys, y=values, order=keys)
@@ -35,7 +39,7 @@ class PlotUtility(ABC):
 
     @staticmethod
     def plot_correlation_matrix(folder: str, correlation_matrix) -> None:
-        plt.figure(figsize=(10, 14))
+        plt.figure(figsize=(14, 14))
         seaborn.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
         plt.title("Correlation Matrix")
         plt.savefig(

@@ -39,29 +39,28 @@ class MultiObjectiveTrainingApplication:
         training_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         os.makedirs(training_datetime)
 
-        print("Generating initial training setups.")
+        print(
+            f"Generating {self.__training_parameters.initial_training_setup_count} initial training setups."
+        )
         training_setups: dict[int, TrainingSetup] = (
             TrainingSetupGenerator.generate_training_setups(self.__training_parameters)
         )
 
-        print("Prepare train and test datasets.")
+        print("Prepare train, validation and test datasets.")
         self.__training_manager.prepare_dataset()
         PlotUtility.plot_correlation_matrix(
             training_datetime, self.__training_manager.get_correlation_matrix()
         )
 
-        print("Starting initial training.")
+        print(f"Starting initial training on {len(training_setups)} training setups.")
         training_results: dict[int, TrainingResult] = (
             self.__training_manager.start_training(training_setups)
-        )
-        PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "full", training_results
         )
 
         print(
             f"Save top {self.__training_parameters.initial_training_top_n_selection_count} initial training results."
         )
-        top_training_results: dict[int, TrainingResult] = (
+        top_initial_training_results: dict[int, TrainingResult] = (
             TrainingResultUtility.get_top_n_training_results(
                 training_results,
                 self.__training_parameters.initial_training_top_n_selection_count,
@@ -75,16 +74,16 @@ class MultiObjectiveTrainingApplication:
         TrainingResultUtility.save_training_results(
             training_datetime,
             MultiObjectiveTrainingApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
-            top_training_results,
+            top_initial_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "top_n", top_training_results
+            training_datetime, "initial_top_n", top_initial_training_results
         )
 
-        print("Starting mutation and crossover training.")
-        final_training_results: dict[int, TrainingResult] = (
+        print("Starting meta-optimization training.")
+        final_top_training_results, all_training_results = (
             self.__training_manager.start_mutation_and_crossover(
-                len(training_setups) + 1, top_training_results
+                len(training_setups) + 1, top_initial_training_results, training_results
             )
         )
 
@@ -92,14 +91,17 @@ class MultiObjectiveTrainingApplication:
         TrainingResultUtility.save_training_results(
             training_datetime,
             MultiObjectiveTrainingApplication.__FINAL_TRAINING_RESULT_DIR_NAME,
-            final_training_results,
+            final_top_training_results,
         )
         TrainingResultUtility.save_training_results_report(
             training_datetime,
-            final_training_results,
+            final_top_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "final_top_n", final_training_results
+            training_datetime, "final_top_n", final_top_training_results
+        )
+        PlotUtility.plot_training_multi_objective_scores(
+            training_datetime, "all", all_training_results
         )
 
 

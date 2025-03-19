@@ -15,7 +15,7 @@ class TrainingResultUtility(ABC):
         return dict(
             sorted(
                 training_results.items(),
-                key=lambda item: item[1].multi_objective_score,
+                key=lambda item: item[1].validation_results["multi_objective_score"],
                 reverse=True,
             )[:n]
         )
@@ -29,14 +29,16 @@ class TrainingResultUtility(ABC):
         training_results = dict(
             sorted(
                 training_results.items(),
-                key=lambda item: item[1].multi_objective_score,
+                key=lambda item: item[1].validation_results["multi_objective_score"],
                 reverse=True,
             )
         )
 
         if (
-            training_results[list(training_results.keys())[-1]].multi_objective_score
-            < new_training_result.multi_objective_score
+            training_results[list(training_results.keys())[-1]].validation_results[
+                "multi_objective_score"
+            ]
+            < new_training_result.validation_results["multi_objective_score"]
         ):
             training_results.pop(list(training_results.keys())[-1])
             training_results[new_training_index] = new_training_result
@@ -82,5 +84,5 @@ class TrainingResultUtility(ABC):
         ) as file:
             for index, training_result in training_results.items():
                 file.write(
-                    f"{index},{training_result.multi_objective_score},[{training_result.training_setup.features}]\n"
+                    f"{index},{training_result.validation_results["multi_objective_score"]},[{training_result.training_setup.features}]\n"
                 )
