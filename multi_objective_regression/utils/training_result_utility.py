@@ -26,21 +26,20 @@ class TrainingResultUtility(ABC):
         new_training_result: TrainingResult,
         training_results: dict[int, TrainingResult],
     ) -> dict[int, TrainingResult]:
-        training_results = dict(
-            sorted(
-                training_results.items(),
-                key=lambda item: item[1].validation_results["multi_objective_score"],
-                reverse=True,
-            )
-        )
-
-        if (
-            training_results[list(training_results.keys())[-1]].validation_results[
+        lowest_key: int = min(
+            training_results,
+            key=lambda k: training_results[k].validation_results[
                 "multi_objective_score"
-            ]
-            < new_training_result.validation_results["multi_objective_score"]
-        ):
-            training_results.pop(list(training_results.keys())[-1])
+            ],
+        )
+        lowest_score: float = training_results[lowest_key].validation_results[
+            "multi_objective_score"
+        ]
+
+        new_score = new_training_result.validation_results["multi_objective_score"]
+
+        if new_score > lowest_score:
+            training_results.pop(lowest_key)
             training_results[new_training_index] = new_training_result
 
         return training_results
@@ -82,7 +81,11 @@ class TrainingResultUtility(ABC):
             ),
             "w",
         ) as file:
-            for index, training_result in training_results.items():
+            for index, training_result in sorted(
+                training_results.items(),
+                key=lambda item: item[1].validation_results["multi_objective_score"],
+                reverse=True,
+            ):
                 file.write(
                     f"{index},{training_result.validation_results["multi_objective_score"]},[{training_result.training_setup.features}]\n"
                 )

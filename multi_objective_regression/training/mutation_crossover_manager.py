@@ -51,8 +51,4 @@ class MutationCrossoverManager:
             else:
                 if feature in training_setup_b.features:
                     new_training_setup.features.append(feature)
-
-        if len(new_training_setup.features) == 0:
-            return None
-
         return new_training_setup
