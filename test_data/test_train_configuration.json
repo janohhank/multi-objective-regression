@@ -34,9 +34,9 @@
     ]
   ],
   "initial_training_setup_generator_type": "RANDOM_COMBINATIONS",
-  "initial_training_setup_count": 400,
+  "initial_training_setup_count": 256,
   "initial_training_top_n_selection_count": 20,
-  "mutation_and_crossover_iteration": 1024,
+  "mutation_and_crossover_iteration": 2048,
   "mutation_and_crossover_balance": 0.5,
   "mutation_feature_change_probability": 0.3,
   "crossover_feature_selection_probability": 0.5,

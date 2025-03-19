@@ -123,9 +123,20 @@ class TrainingManager:
                     )
                 )
 
+            # Skip if generated an empty feature set.
             if new_training_setup is None or not new_training_setup.features:
                 continue
 
+            # Skip if the generated feature set contains an excluded feature combination.
+            skip: bool = False
+            for exclusion_tuple in self.__training_parameters.excluded_feature_sets:
+                if set(exclusion_tuple).issubset(set(new_training_setup.features)):
+                    skip = True
+
+            if skip:
+                continue
+
+            # Skip if this combination is already tried.
             found_same = False
             for training_result in all_training_results.values():
                 if Counter(training_result.training_setup.features) == Counter(
