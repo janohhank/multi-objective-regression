@@ -1,5 +1,6 @@
 import time
 import typing
+from copy import deepcopy
 
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
@@ -81,6 +82,8 @@ class LogisticRegressionTraining:
                 y_test,
             ),
             elapsed,
+            deepcopy(log_regression),
+            deepcopy(scaler.copy),
         )
 
     @staticmethod

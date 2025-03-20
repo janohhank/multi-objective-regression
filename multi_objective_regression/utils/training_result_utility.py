@@ -1,12 +1,22 @@
-import dataclasses
 import json
 import os
 from abc import ABC
 
+import joblib
 from dto.training_result import TrainingResult
 
 
 class TrainingResultUtility(ABC):
+
+    @staticmethod
+    def get_best_training_result(
+        training_results: dict[int, TrainingResult],
+    ) -> TrainingResult:
+        return sorted(
+            training_results.items(),
+            key=lambda item: item[1].validation_results["multi_objective_score"],
+            reverse=True,
+        )[0][1]
 
     @staticmethod
     def get_top_n_training_results(
@@ -66,9 +76,47 @@ class TrainingResultUtility(ABC):
             ) as file:
                 file.write(
                     json.dumps(
-                        dataclasses.asdict(training_result), indent=4, default=str
+                        training_result.to_dict(),
+                        indent=4,
+                        default=str,
                     )
                 )
+
+    @staticmethod
+    def save_model(
+        training_datetime: str, folder: str, training_result: TrainingResult
+    ) -> None:
+        os.makedirs(
+            os.path.join(
+                training_datetime,
+                folder,
+            )
+        )
+        print(training_result)
+
+        with open(
+            os.path.join(
+                training_datetime,
+                folder,
+                str(training_result.index) + "_result.json",
+            ),
+            "w",
+        ) as file:
+            file.write(
+                json.dumps(
+                    training_result.to_dict(),
+                    indent=4,
+                    default=str,
+                )
+            )
+
+        joblib.dump(
+            training_result.model, os.path.join(training_datetime, folder, "model.pkl")
+        )
+        joblib.dump(
+            training_result.scaler,
+            os.path.join(training_datetime, folder, "scaler.pkl"),
+        )
 
     @staticmethod
     def save_training_results_report(

@@ -103,6 +103,11 @@ class MultiObjectiveTrainingApplication:
         PlotUtility.plot_training_multi_objective_scores(
             training_datetime, "all", all_training_results
         )
+        TrainingResultUtility.save_model(
+            training_datetime,
+            "model",
+            TrainingResultUtility.get_best_training_result(final_top_training_results),
+        )
 
 
 def main():
