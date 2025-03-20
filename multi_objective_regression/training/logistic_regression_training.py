@@ -7,7 +7,13 @@ from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
 from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, precision_score, roc_auc_score
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    roc_auc_score,
+    recall_score,
+    f1_score,
+)
 from sklearn.preprocessing import StandardScaler
 
 
@@ -49,7 +55,12 @@ class LogisticRegressionTraining:
         scaled_x_test = scaler.transform(x_test_reduced)
 
         log_regression = LogisticRegression(
-            n_jobs=4, penalty="l2", C=1.0, solver="lbfgs", max_iter=1024
+            n_jobs=4,
+            penalty="l2",
+            C=1.0,
+            solver="lbfgs",
+            max_iter=1024,
+            random_state=42,
         )
         log_regression.fit(scaled_x_train, y_train)
 
@@ -95,6 +106,10 @@ class LogisticRegressionTraining:
         x_test,
         y_test,
     ):
+        y_pred: typing.Any = log_regression.predict(x_test)
+        y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]
+
+        # Coefficients sign diff penalty calculation
         coefficients: dict[str, float] = dict(
             zip(training_setup.features, log_regression.coef_[0])
         )
@@ -104,17 +119,26 @@ class LogisticRegressionTraining:
             coefficient_sign_diff_checks[feature] = (
                 covariance_to_target_feature[feature] * coefficient < 0
             )
-        coefficient_sign_diff_penalty: float = 1.0 - sum(
+        coefficient_sign_diff_score: float = 1.0 - sum(
             coefficient_sign_diff_checks.values()
         ) / len(coefficient_sign_diff_checks)
 
-        y_validation_pred: typing.Any = log_regression.predict(x_test)
-        accuracy: float = accuracy_score(y_test, y_validation_pred)
-        precision: float = precision_score(y_test, y_validation_pred)
+        # Accuracy
+        accuracy: float = accuracy_score(y_test, y_pred)
 
-        y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]
+        # Precision
+        precision: float = precision_score(y_test, y_pred)
+
+        # Recall
+        recall: float = recall_score(y_test, y_pred)
+
+        # F1 score
+        f1_score_value: float = f1_score(y_test, y_pred)
+
+        # ROC-AUC
         roc_auc: float = roc_auc_score(y_test, y_probs)
 
+        # Gini
         gini_score: float = 2 * roc_auc - 1
 
         multi_objective_score: float = (
@@ -122,23 +146,28 @@ class LogisticRegressionTraining:
             * accuracy
             + training_parameters.multi_objective_function_weights["precision_weight"]
             * precision
+            + training_parameters.multi_objective_function_weights["f1_score_weight"]
+            * f1_score_value
+            + training_parameters.multi_objective_function_weights["recall_weight"]
+            * recall
             + training_parameters.multi_objective_function_weights["roc_auc_weight"]
             * roc_auc
             + training_parameters.multi_objective_function_weights["gini_score_weight"]
             * gini_score
             + training_parameters.multi_objective_function_weights[
-                "coefficient_sign_diff_penalty_weight"
+                "coefficient_sign_diff_score_weight"
             ]
-            * coefficient_sign_diff_penalty
+            * coefficient_sign_diff_score
         )
 
         return {
             "accuracy": accuracy,
             "precision": precision,
+            "recall": recall,
+            "f1_score": f1_score_value,
             "roc_auc": roc_auc,
             "gini_score": gini_score,
-            "coefficient_sign_diff_penalty": coefficient_sign_diff_penalty,
-            "coefficient_sign_diff_checks": coefficient_sign_diff_checks,
+            "coefficient_sign_diff_score": coefficient_sign_diff_score,
             "multi_objective_score": multi_objective_score,
         }
 

@@ -92,7 +92,6 @@ class TrainingResultUtility(ABC):
                 folder,
             )
         )
-        print(training_result)
 
         with open(
             os.path.join(
