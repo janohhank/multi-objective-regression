@@ -1,5 +1,6 @@
 import argparse
 import os
+import time
 from datetime import datetime
 
 from dto.training_parameters import TrainingParameters
@@ -36,6 +37,9 @@ class MultiObjectiveTrainingApplication:
         self.__training_manager = TrainingManager(self.__training_parameters)
 
     def start_training(self):
+        print("Starting training")
+        start: float = time.perf_counter()
+
         training_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         os.makedirs(training_datetime)
 
@@ -80,7 +84,7 @@ class MultiObjectiveTrainingApplication:
 
         print("Starting meta-optimization training.")
         final_top_training_results, all_training_results = (
-            self.__training_manager.start_mutation_and_crossover(
+            self.__training_manager.start_meta_optimization(
                 len(training_setups) + 1, top_initial_training_results, training_results
             )
         )
@@ -115,6 +119,9 @@ class MultiObjectiveTrainingApplication:
         PlotUtility.plot_metric_comparison(
             training_datetime, 4, final_top_training_results
         )
+
+        elapsed: float = time.perf_counter() - start
+        print(f"Finished training on {elapsed:.2f} seconds.")
 
 
 def main():

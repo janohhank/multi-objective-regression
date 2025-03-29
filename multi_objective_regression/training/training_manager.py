@@ -74,18 +74,18 @@ class TrainingManager:
         )
 
         print(
-            "Train class distribution:",
+            "Train dataset target variable distribution:",
             {label: sum(self.__y_train == label) for label in set(self.__y_train)},
         )
         print(
-            "Validation class distribution:",
+            "Validation dataset target variable distribution:",
             {
                 label: sum(self.__y_validation == label)
                 for label in set(self.__y_validation)
             },
         )
         print(
-            "Test class distribution:",
+            "Test dataset target variable distribution:",
             {label: sum(self.__y_test == label) for label in set(self.__y_test)},
         )
 
@@ -107,7 +107,7 @@ class TrainingManager:
             )
         return train_results
 
-    def start_mutation_and_crossover(
+    def start_meta_optimization(
         self,
         current_training_index: int,
         initial_training_top_n_results: dict[int, TrainingResult],
@@ -181,7 +181,7 @@ class TrainingManager:
                         training_setup
                     )
 
-        print(f"Overall inspected training setups: {new_candidate_training_index}")
+        print(f"Overall inspected training setups: {new_candidate_training_index}.")
         return final_top_n_training_results, all_training_results
 
     def __is_valid_training_setup(

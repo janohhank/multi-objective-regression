@@ -1,6 +1,7 @@
 import itertools
 import random
 from abc import ABC
+from collections import Counter
 
 from dto.training_parameters import TrainingParameters
 from dto.training_setup import TrainingSetup
@@ -27,6 +28,15 @@ class TrainingSetupGenerator(ABC):
                         training_parameters
                     )
                 )
+
+        feature_size_counts = Counter(
+            len(training_setup.features) for training_setup in training_setups.values()
+        )
+        for size, count in feature_size_counts.items():
+            print(
+                f"Generated initial feature setup(s): {count} piece(s) of {size} feature size."
+            )
+
         return training_setups
 
     # deprecated
