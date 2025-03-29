@@ -12,12 +12,10 @@ class MutationCrossoverManager:
     def __init__(self, training_parameters: TrainingParameters):
         self.__training_parameters = training_parameters
 
-    def features_mutation(
-        self, new_training_index: int, training_result: TrainingResult
-    ) -> TrainingSetup:
+    def features_mutation(self, training_result: TrainingResult) -> TrainingSetup:
         training_setup: TrainingSetup = training_result.training_setup
         new_training_setup: TrainingSetup = deepcopy(training_setup)
-        new_training_setup.index = new_training_index
+        new_training_setup.index = -1
 
         for feature in self.__training_parameters.features:
             if (
@@ -32,14 +30,13 @@ class MutationCrossoverManager:
 
     def features_crossover(
         self,
-        new_training_index: int,
         training_result_a: TrainingResult,
         training_result_b: TrainingResult,
     ) -> TrainingSetup:
         training_setup_a: TrainingSetup = training_result_a.training_setup
         training_setup_b: TrainingSetup = training_result_b.training_setup
 
-        new_training_setup: TrainingSetup = TrainingSetup(new_training_index, [])
+        new_training_setup: TrainingSetup = TrainingSetup(-1, [])
         for feature in self.__training_parameters.features:
             if (
                 random.uniform(0, 1)

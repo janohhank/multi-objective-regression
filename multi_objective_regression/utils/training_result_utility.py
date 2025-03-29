@@ -128,6 +128,7 @@ class TrainingResultUtility(ABC):
             ),
             "w",
         ) as file:
+            file.write("Index, Validation MOS, Selected Features")
             for index, training_result in sorted(
                 training_results.items(),
                 key=lambda item: item[1].validation_results["multi_objective_score"],

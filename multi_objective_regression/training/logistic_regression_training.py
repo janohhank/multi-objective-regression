@@ -1,7 +1,9 @@
+import math
 import time
 import typing
 from copy import deepcopy
 
+import numpy as np
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
@@ -27,7 +29,7 @@ class LogisticRegressionTraining:
         self,
         index: int,
         training_setup: TrainingSetup,
-        covariance_to_target_feature,
+        correlation_to_target_feature,
         x_train,
         y_train,
         x_validation,
@@ -79,7 +81,7 @@ class LogisticRegressionTraining:
             LogisticRegressionTraining.evaluate_model(
                 self.__training_parameters,
                 training_setup,
-                covariance_to_target_feature,
+                correlation_to_target_feature,
                 log_regression,
                 scaled_x_validation,
                 y_validation,
@@ -87,7 +89,7 @@ class LogisticRegressionTraining:
             LogisticRegressionTraining.evaluate_model(
                 self.__training_parameters,
                 training_setup,
-                covariance_to_target_feature,
+                correlation_to_target_feature,
                 log_regression,
                 scaled_x_test,
                 y_test,
@@ -101,13 +103,25 @@ class LogisticRegressionTraining:
     def evaluate_model(
         training_parameters: TrainingParameters,
         training_setup: TrainingSetup,
-        covariance_to_target_feature,
+        correlation_to_target_feature,
         log_regression,
         x_test,
         y_test,
     ):
         y_pred: typing.Any = log_regression.predict(x_test)
         y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]
+
+        if len(np.unique(y_pred)) != 2:
+            return {
+                "accuracy": 0.0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1_score": 0.0,
+                "roc_auc": 0.0,
+                "gini_score": 0.0,
+                "coefficient_sign_diff_score": 0.0,
+                "multi_objective_score": 0.0,
+            }
 
         # Coefficients sign diff penalty calculation
         coefficients: dict[str, float] = dict(
@@ -116,9 +130,13 @@ class LogisticRegressionTraining:
 
         coefficient_sign_diff_checks: dict[str, bool] = {}
         for feature, coefficient in coefficients.items():
-            coefficient_sign_diff_checks[feature] = (
-                covariance_to_target_feature[feature] * coefficient < 0
-            )
+            if math.isnan(correlation_to_target_feature[feature]):
+                coefficient_sign_diff_checks[feature] = True
+            else:
+                check: float = correlation_to_target_feature[feature] * coefficient
+                coefficient_sign_diff_checks[feature] = (
+                    math.isclose(check, 0.0) or check < 0.0
+                )
         coefficient_sign_diff_score: float = 1.0 - sum(
             coefficient_sign_diff_checks.values()
         ) / len(coefficient_sign_diff_checks)
@@ -175,3 +193,28 @@ class LogisticRegressionTraining:
     def __get_standardization_scaler(dataset: DataFrame) -> typing.Any:
         standard_scaler = StandardScaler()
         return standard_scaler.fit(dataset)
+
+    def get_new_training_setup_candidates(
+        self, training_result: dict[int, TrainingResult]
+    ) -> list[TrainingSetup]:
+        results: list[TrainingResult] = []
+
+        for index, training_result in training_result.items():
+            is_contains: bool = any(
+                math.isclose(coefficient, 0.0)
+                for coefficient in training_result.coefficients.values()
+            )
+            if not is_contains:
+                continue
+
+            new_training_setup: TrainingSetup = deepcopy(training_result.training_setup)
+            new_training_setup.index = -1
+            new_training_setup.features = []
+            for feature, coefficient in training_result.coefficients.items():
+                if not math.isclose(coefficient, 0.0):
+                    new_training_setup.features.append(feature)
+
+            if len(new_training_setup.features) != 0:
+                results.append(new_training_setup)
+
+        return results

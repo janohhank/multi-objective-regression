@@ -5,6 +5,7 @@ from copy import deepcopy
 import pandas
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
+from dto.training_setup import TrainingSetup
 from pandas import DataFrame
 from sklearn.model_selection import train_test_split
 from training.logistic_regression_training import (
@@ -116,64 +117,104 @@ class TrainingManager:
             initial_training_top_n_results
         )
 
-        new_training_index: int = current_training_index
+        training_setup_workspace: dict[int, TrainingSetup] = {}
+        new_candidate_training_index: int = current_training_index
         for _ in range(self.__training_parameters.mutation_and_crossover_iteration):
-            new_training_index += 1
-
             if (
                 random.uniform(0, 1)
                 < self.__training_parameters.mutation_and_crossover_balance
             ):
                 new_training_setup: TrainingResult = (
                     self.__mutation_crossover_manager.features_mutation(
-                        new_training_index,
                         random.choice(list(final_top_n_training_results.values())),
                     )
                 )
             else:
                 new_training_setup: TrainingResult = (
                     self.__mutation_crossover_manager.features_crossover(
-                        new_training_index,
                         random.choice(list(final_top_n_training_results.values())),
                         random.choice(list(final_top_n_training_results.values())),
                     )
                 )
 
-            # Skip if generated an empty feature set.
-            if new_training_setup is None or not new_training_setup.features:
-                continue
+            if (
+                self.__is_trainable_feature_set(
+                    new_training_setup, all_training_results
+                )
+                is True
+            ):
+                new_candidate_training_index += 1
+                new_training_setup.index = new_candidate_training_index
+                training_setup_workspace[new_candidate_training_index] = (
+                    new_training_setup
+                )
 
-            # Skip if the generated feature set contains an excluded feature combination.
-            skip: bool = False
-            for exclusion_tuple in self.__training_parameters.excluded_feature_sets:
-                if set(exclusion_tuple).issubset(set(new_training_setup.features)):
-                    skip = True
-
-            if skip:
-                continue
-
-            # Skip if this combination is already tried.
-            found_same = False
-            for training_result in all_training_results.values():
-                if Counter(training_result.training_setup.features) == Counter(
-                    new_training_setup.features
-                ):
-                    found_same = True
-                    break
-            if found_same:
+            if len(training_setup_workspace) == 0:
                 continue
 
             training_results: dict[int, TrainingResult] = self.start_training(
-                {new_training_index: new_training_setup}
+                training_setup_workspace
             )
-            all_training_results[new_training_index] = training_results[
-                new_training_index
-            ]
-            final_top_n_training_results: dict[int, TrainingResult] = (
-                TrainingResultUtility.merge_training_results(
-                    new_training_index,
-                    training_results[new_training_index],
-                    final_top_n_training_results,
+
+            for index, training_result in training_results.items():
+                all_training_results[index] = training_result
+                final_top_n_training_results: dict[int, TrainingResult] = (
+                    TrainingResultUtility.merge_training_results(
+                        index,
+                        training_result,
+                        final_top_n_training_results,
+                    )
+                )
+            training_setup_workspace.clear()
+
+            training_setup_candidates: list[TrainingSetup] = (
+                self.__logistic_regression_training.get_new_training_setup_candidates(
+                    training_results
                 )
             )
+            for training_setup in training_setup_candidates:
+                if (
+                    self.__is_trainable_feature_set(
+                        training_setup, all_training_results
+                    )
+                    is True
+                ):
+                    new_candidate_training_index += 1
+                    training_setup.index = new_candidate_training_index
+                    training_setup_workspace[new_candidate_training_index] = (
+                        training_setup
+                    )
+
+        print(f"Overall inspected training setups: {new_candidate_training_index}")
         return final_top_n_training_results, all_training_results
+
+    def __is_trainable_feature_set(
+        self,
+        new_training_setup: TrainingSetup,
+        all_training_results: dict[int, TrainingResult],
+    ) -> bool:
+        # Skip if generated an empty feature set.
+        if new_training_setup is None or not new_training_setup.features:
+            return False
+
+        # Skip if the generated feature set contains an excluded feature combination.
+        skip: bool = False
+        for exclusion_tuple in self.__training_parameters.excluded_feature_sets:
+            if set(exclusion_tuple).issubset(set(new_training_setup.features)):
+                skip = True
+
+        if skip:
+            return False
+
+        # Skip if this combination is already tried.
+        found_same = False
+        for training_result in all_training_results.values():
+            if Counter(training_result.training_setup.features) == Counter(
+                new_training_setup.features
+            ):
+                found_same = True
+                break
+        if found_same:
+            return False
+
+        return True

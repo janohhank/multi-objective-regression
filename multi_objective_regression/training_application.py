@@ -19,7 +19,7 @@ from utils.training_result_utility import (
 
 
 class MultiObjectiveTrainingApplication:
-    __INITIAL_TRAINING_RESULT_DIR_NAME: str = "initial_training_results"
+    __VALIDATION_DATASET_PREFIX: str = "Validation dataset"
     __INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME: str = "initial_top_n_training_results"
     __FINAL_TRAINING_RESULT_DIR_NAME: str = "final_top_n_training_results"
 
@@ -68,16 +68,14 @@ class MultiObjectiveTrainingApplication:
         )
         TrainingResultUtility.save_training_results(
             training_datetime,
-            MultiObjectiveTrainingApplication.__INITIAL_TRAINING_RESULT_DIR_NAME,
-            training_results,
-        )
-        TrainingResultUtility.save_training_results(
-            training_datetime,
             MultiObjectiveTrainingApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
             top_initial_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "initial_top_n", top_initial_training_results
+            training_datetime,
+            "initial_top_n",
+            top_initial_training_results,
+            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
         )
 
         print("Starting meta-optimization training.")
@@ -98,15 +96,24 @@ class MultiObjectiveTrainingApplication:
             final_top_training_results,
         )
         PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "final_top_n", final_top_training_results
+            training_datetime,
+            "final_top_n",
+            final_top_training_results,
+            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
         )
         PlotUtility.plot_training_multi_objective_scores(
-            training_datetime, "all", all_training_results
+            training_datetime,
+            "all",
+            all_training_results,
+            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
         )
         TrainingResultUtility.save_model(
             training_datetime,
             "model",
             TrainingResultUtility.get_best_training_result(final_top_training_results),
+        )
+        PlotUtility.plot_metric_comparison(
+            training_datetime, 4, final_top_training_results
         )
 
 
