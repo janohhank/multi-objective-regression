@@ -138,9 +138,7 @@ class TrainingManager:
                 )
 
             if (
-                self.__is_trainable_feature_set(
-                    new_training_setup, all_training_results
-                )
+                self.__is_valid_training_setup(new_training_setup, all_training_results)
                 is True
             ):
                 new_candidate_training_index += 1
@@ -168,15 +166,13 @@ class TrainingManager:
             training_setup_workspace.clear()
 
             training_setup_candidates: list[TrainingSetup] = (
-                self.__logistic_regression_training.get_new_training_setup_candidates(
+                self.__logistic_regression_training.suggest_training_setup_candidates(
                     training_results
                 )
             )
             for training_setup in training_setup_candidates:
                 if (
-                    self.__is_trainable_feature_set(
-                        training_setup, all_training_results
-                    )
+                    self.__is_valid_training_setup(training_setup, all_training_results)
                     is True
                 ):
                     new_candidate_training_index += 1
@@ -188,7 +184,7 @@ class TrainingManager:
         print(f"Overall inspected training setups: {new_candidate_training_index}")
         return final_top_n_training_results, all_training_results
 
-    def __is_trainable_feature_set(
+    def __is_valid_training_setup(
         self,
         new_training_setup: TrainingSetup,
         all_training_results: dict[int, TrainingResult],

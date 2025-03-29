@@ -7,7 +7,6 @@ import numpy as np
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -16,7 +15,7 @@ from sklearn.metrics import (
     recall_score,
     f1_score,
 )
-from sklearn.preprocessing import StandardScaler
+from utils.training_utility import TrainingUtility
 
 
 class LogisticRegressionTraining:
@@ -45,9 +44,7 @@ class LogisticRegressionTraining:
         x_test_reduced = x_test[training_setup.features].copy()
 
         # Create z-score standardization scaler from train dataset.
-        scaler = LogisticRegressionTraining.__get_standardization_scaler(
-            x_train_reduced
-        )
+        scaler = TrainingUtility.fit_standard_scaler(x_train_reduced)
 
         # Standardize train dataset.
         scaled_x_train = scaler.transform(x_train_reduced)
@@ -78,16 +75,14 @@ class LogisticRegressionTraining:
             coefficients,
             float(log_regression.intercept_[0]),
             int(log_regression.n_iter_[0]),
-            LogisticRegressionTraining.evaluate_model(
-                self.__training_parameters,
+            self.evaluate(
                 training_setup,
                 correlation_to_target_feature,
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
-            LogisticRegressionTraining.evaluate_model(
-                self.__training_parameters,
+            self.evaluate(
                 training_setup,
                 correlation_to_target_feature,
                 log_regression,
@@ -99,9 +94,8 @@ class LogisticRegressionTraining:
             deepcopy(scaler.copy),
         )
 
-    @staticmethod
-    def evaluate_model(
-        training_parameters: TrainingParameters,
+    def evaluate(
+        self,
         training_setup: TrainingSetup,
         correlation_to_target_feature,
         log_regression,
@@ -111,7 +105,7 @@ class LogisticRegressionTraining:
         y_pred: typing.Any = log_regression.predict(x_test)
         y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]
 
-        if len(np.unique(y_pred)) != 2:
+        if len(np.unique(y_pred)) != len(np.unique(y_test)):
             return {
                 "accuracy": 0.0,
                 "precision": 0.0,
@@ -160,19 +154,31 @@ class LogisticRegressionTraining:
         gini_score: float = 2 * roc_auc - 1
 
         multi_objective_score: float = (
-            training_parameters.multi_objective_function_weights["accuracy_weight"]
+            self.__training_parameters.multi_objective_function_weights[
+                "accuracy_weight"
+            ]
             * accuracy
-            + training_parameters.multi_objective_function_weights["precision_weight"]
+            + self.__training_parameters.multi_objective_function_weights[
+                "precision_weight"
+            ]
             * precision
-            + training_parameters.multi_objective_function_weights["f1_score_weight"]
+            + self.__training_parameters.multi_objective_function_weights[
+                "f1_score_weight"
+            ]
             * f1_score_value
-            + training_parameters.multi_objective_function_weights["recall_weight"]
+            + self.__training_parameters.multi_objective_function_weights[
+                "recall_weight"
+            ]
             * recall
-            + training_parameters.multi_objective_function_weights["roc_auc_weight"]
+            + self.__training_parameters.multi_objective_function_weights[
+                "roc_auc_weight"
+            ]
             * roc_auc
-            + training_parameters.multi_objective_function_weights["gini_score_weight"]
+            + self.__training_parameters.multi_objective_function_weights[
+                "gini_score_weight"
+            ]
             * gini_score
-            + training_parameters.multi_objective_function_weights[
+            + self.__training_parameters.multi_objective_function_weights[
                 "coefficient_sign_diff_score_weight"
             ]
             * coefficient_sign_diff_score
@@ -189,12 +195,7 @@ class LogisticRegressionTraining:
             "multi_objective_score": multi_objective_score,
         }
 
-    @staticmethod
-    def __get_standardization_scaler(dataset: DataFrame) -> typing.Any:
-        standard_scaler = StandardScaler()
-        return standard_scaler.fit(dataset)
-
-    def get_new_training_setup_candidates(
+    def suggest_training_setup_candidates(
         self, training_result: dict[int, TrainingResult]
     ) -> list[TrainingSetup]:
         results: list[TrainingResult] = []
