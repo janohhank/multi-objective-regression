@@ -14,6 +14,7 @@ from sklearn.metrics import (
     roc_auc_score,
     recall_score,
     f1_score,
+    average_precision_score,
 )
 from utils.training_utility import TrainingUtility
 
@@ -150,6 +151,9 @@ class LogisticRegressionTraining:
         # ROC-AUC
         roc_auc: float = roc_auc_score(y_test, y_probs)
 
+        # PR-AUC
+        pr_auc: float = average_precision_score(y_test, y_probs)
+
         # Gini
         gini_score: float = 2 * roc_auc - 1
 
@@ -175,6 +179,10 @@ class LogisticRegressionTraining:
             ]
             * roc_auc
             + self.__training_parameters.multi_objective_function_weights[
+                "pr_auc_weight"
+            ]
+            * pr_auc
+            + self.__training_parameters.multi_objective_function_weights[
                 "gini_score_weight"
             ]
             * gini_score
@@ -190,6 +198,7 @@ class LogisticRegressionTraining:
             "recall": recall,
             "f1_score": f1_score_value,
             "roc_auc": roc_auc,
+            "pr_auc": pr_auc,
             "gini_score": gini_score,
             "coefficient_sign_diff_score": coefficient_sign_diff_score,
             "multi_objective_score": multi_objective_score,

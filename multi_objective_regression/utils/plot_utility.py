@@ -80,6 +80,7 @@ class PlotUtility(ABC):
             "recall",
             "f1_score",
             "roc_auc",
+            "pr_auc",
             "coefficient_sign_diff_score",
         ]
         data = {"Index": [], "Metric": [], "Value": []}
