@@ -92,7 +92,7 @@ class LogisticRegressionTraining:
             ),
             elapsed,
             deepcopy(log_regression),
-            deepcopy(scaler.copy),
+            deepcopy(scaler),
         )
 
     def evaluate(
@@ -113,6 +113,7 @@ class LogisticRegressionTraining:
                 "recall": 0.0,
                 "f1_score": 0.0,
                 "roc_auc": 0.0,
+                "pr_auc": 0.0,
                 "gini_score": 0.0,
                 "coefficient_sign_diff_score": 0.0,
                 "multi_objective_score": 0.0,

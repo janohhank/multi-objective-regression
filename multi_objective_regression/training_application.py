@@ -3,6 +3,8 @@ import os
 import time
 from datetime import datetime
 
+from pandas import DataFrame
+
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
@@ -17,6 +19,7 @@ from utils.training_parameter_utility import (
 from utils.training_result_utility import (
     TrainingResultUtility,
 )
+from utils.training_utility import TrainingUtility
 
 
 class MultiObjectiveTrainingApplication:
@@ -111,13 +114,38 @@ class MultiObjectiveTrainingApplication:
             all_training_results,
             MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
         )
+
+        test_dataset: tuple[DataFrame, DataFrame] = (
+            self.__training_manager.get_test_dataset()
+        )
+        best_model: TrainingResult = TrainingResultUtility.get_best_training_result(
+            final_top_training_results
+        )
+
         TrainingResultUtility.save_model(
             training_datetime,
             "model",
-            TrainingResultUtility.get_best_training_result(final_top_training_results),
+            best_model,
         )
+
+        TrainingUtility.save_dataset(
+            training_datetime,
+            "test_dataset",
+            test_dataset,
+        )
+
         PlotUtility.plot_metric_comparison(
             training_datetime, 4, final_top_training_results
+        )
+
+        x_test_reduced = test_dataset[0][best_model.training_setup.features].copy()
+        x_test_scaled = best_model.scaler.transform(x_test_reduced)
+        y_probs = best_model.model.predict_proba(x_test_scaled)[:, 1]
+        y_pred = best_model.model.predict(x_test_scaled)
+        PlotUtility.plot_roc_curve(training_datetime, "model", test_dataset[1], y_probs)
+        PlotUtility.plot_pr_curve(training_datetime, "model", test_dataset[1], y_probs)
+        PlotUtility.plot_confusion_matrix(
+            training_datetime, "model", test_dataset[1], y_pred
         )
 
         elapsed: float = time.perf_counter() - start

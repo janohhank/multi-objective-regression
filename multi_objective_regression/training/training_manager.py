@@ -50,6 +50,9 @@ class TrainingManager:
     def get_correlation_matrix(self):
         return self.__correlation_matrix
 
+    def get_test_dataset(self):
+        return self.__x_test, self.__y_test
+
     def prepare_dataset(self):
         print("Loading train dataset.")
         dataset: DataFrame = pandas.read_csv(self.__training_parameters.train_dataset)

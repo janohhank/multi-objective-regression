@@ -5,6 +5,13 @@ import pandas as pd
 import seaborn
 from dto.training_result import TrainingResult
 from matplotlib import pyplot as plt
+from sklearn.metrics import (
+    roc_curve,
+    auc,
+    precision_recall_curve,
+    average_precision_score,
+    confusion_matrix,
+)
 
 
 class PlotUtility(ABC):
@@ -115,6 +122,96 @@ class PlotUtility(ABC):
 
         plt.savefig(
             os.path.join(folder, "performance_metrics.png"),
+            format="png",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()
+
+    @staticmethod
+    def plot_roc_curve(
+        training_datetime: str,
+        folder: str,
+        y_test,
+        y_probs,
+    ):
+        fpr, tpr, _ = roc_curve(y_test, y_probs)
+        roc_auc = auc(fpr, tpr)
+
+        plt.figure(figsize=(6, 5))
+        plt.plot(fpr, tpr, color="blue", lw=2, label=f"ROC curve (AUC = {roc_auc:.4f})")
+        plt.plot([0, 1], [0, 1], color="gray", lw=1, linestyle="--")
+        plt.xlabel("False Positive Rate")
+        plt.ylabel("True Positive Rate")
+        plt.title("ROC Curve")
+        plt.legend(loc="lower right")
+        plt.grid(True)
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(training_datetime, folder, "roc_curve.png"),
+            format="png",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()
+
+    @staticmethod
+    def plot_pr_curve(
+        training_datetime: str,
+        folder: str,
+        y_test,
+        y_probs,
+    ):
+        precision, recall, _ = precision_recall_curve(y_test, y_probs)
+        ap_score = average_precision_score(y_test, y_probs)
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(
+            recall, precision, label=f"PR Curve (AP = {ap_score:.4f})", color="blue"
+        )
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+        plt.title("Precision-Recall Curve")
+        plt.legend()
+        plt.grid(True)
+        seaborn.despine()
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(training_datetime, folder, "pr_curve.png"),
+            format="png",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()
+
+    @staticmethod
+    def plot_confusion_matrix(
+        training_datetime: str,
+        folder: str,
+        y_test,
+        y_pred,
+    ):
+        cm = confusion_matrix(y_test, y_pred)
+        labels = ["Negative", "Positive"]  # Adjust as needed
+
+        plt.figure(figsize=(5, 4))
+        seaborn.heatmap(
+            cm,
+            annot=True,
+            fmt="d",
+            cmap="Blues",
+            xticklabels=labels,
+            yticklabels=labels,
+        )
+        plt.xlabel("Predicted Label")
+        plt.ylabel("True Label")
+        plt.title("Confusion Matrix")
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(training_datetime, folder, "confusion_matrix.png"),
             format="png",
             dpi=300,
             bbox_inches="tight",
