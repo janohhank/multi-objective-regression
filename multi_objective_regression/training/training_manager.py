@@ -7,6 +7,7 @@ from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
 from pandas import DataFrame
+from scipy.stats import pointbiserialr
 from sklearn.model_selection import train_test_split
 from training.logistic_regression_training import (
     LogisticRegressionTraining,
@@ -32,7 +33,8 @@ class TrainingManager:
     __x_test: DataFrame = None
     __y_test: DataFrame = None
 
-    __correlation_matrix = None
+    __pearson_correlation_matrix = None
+    __point_biserial_correlation_matrix = None
     __correlation_to_target_feature: DataFrame = None
 
     def __init__(
@@ -47,8 +49,11 @@ class TrainingManager:
             self.__training_parameters
         )
 
-    def get_correlation_matrix(self):
-        return self.__correlation_matrix
+    def get_pearson_correlation_matrix(self):
+        return self.__pearson_correlation_matrix
+
+    def get_point_biserial_correlation_matrix(self):
+        return self.__point_biserial_correlation_matrix
 
     def get_test_dataset(self):
         return self.__x_test, self.__y_test
@@ -59,11 +64,16 @@ class TrainingManager:
         x: DataFrame = dataset.drop(self.__training_parameters.target_feature, axis=1)
         y: DataFrame = dataset[self.__training_parameters.target_feature].astype(int)
 
-        print("Calculate correlation matrix.")
-        self.__correlation_matrix = dataset.corr()
-        self.__correlation_to_target_feature: DataFrame = self.__correlation_matrix[
-            self.__training_parameters.target_feature
-        ]
+        print("Calculate pearson correlation matrix.")
+        self.__pearson_correlation_matrix = dataset.corr()
+        self.__correlation_to_target_feature: DataFrame = (
+            self.__pearson_correlation_matrix[self.__training_parameters.target_feature]
+        )
+
+        print("Calculate point-biserial correlation matrix.")
+        self.__point_biserial_correlation_matrix = {
+            column: pointbiserialr(x[column], y).correlation for column in x.columns
+        }
 
         print("Split dataset into train, validation and test.")
         self.__x_train, x_temp, self.__y_train, y_temp = train_test_split(

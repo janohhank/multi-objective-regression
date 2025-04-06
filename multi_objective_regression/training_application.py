@@ -56,7 +56,18 @@ class MultiObjectiveTrainingApplication:
         print("Prepare train, validation and test datasets.")
         self.__training_manager.prepare_dataset()
         PlotUtility.plot_correlation_matrix(
-            training_datetime, self.__training_manager.get_correlation_matrix()
+            training_datetime,
+            "Pearson",
+            self.__training_manager.get_pearson_correlation_matrix(),
+        )
+        PlotUtility.plot_correlation_matrix(
+            training_datetime,
+            "Point-biserial",
+            DataFrame.from_dict(
+                self.__training_manager.get_point_biserial_correlation_matrix(),
+                orient="index",
+                columns=["Outcome"],
+            ),
         )
 
         print(f"Starting initial training on {len(training_setups)} training setups.")

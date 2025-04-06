@@ -57,12 +57,12 @@ class PlotUtility(ABC):
         plt.clf()
 
     @staticmethod
-    def plot_correlation_matrix(folder: str, correlation_matrix) -> None:
+    def plot_correlation_matrix(folder: str, prefix: str, correlation_matrix) -> None:
         plt.figure(figsize=(14, 14))
         seaborn.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
-        plt.title("Correlation Matrix")
+        plt.title(prefix + " Correlation Matrix")
         plt.savefig(
-            os.path.join(folder, "correlation_matrix.pdf"),
+            os.path.join(folder, prefix.lower() + "_correlation_matrix.pdf"),
             format="pdf",
             dpi=300,
             bbox_inches="tight",
