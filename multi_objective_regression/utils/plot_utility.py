@@ -166,16 +166,15 @@ class PlotUtility(ABC):
         precision, recall, _ = precision_recall_curve(y_test, y_probs)
         ap_score = average_precision_score(y_test, y_probs)
 
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(6, 5))
         plt.plot(
             recall, precision, label=f"PR Curve (AP = {ap_score:.4f})", color="blue"
         )
         plt.xlabel("Recall")
         plt.ylabel("Precision")
-        plt.title("Precision-Recall Curve")
-        plt.legend()
+        plt.title("PR Curve")
+        plt.legend(loc="lower right")
         plt.grid(True)
-        seaborn.despine()
         plt.tight_layout()
 
         plt.savefig(
