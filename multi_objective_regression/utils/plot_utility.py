@@ -50,8 +50,8 @@ class PlotUtility(ABC):
                     label.set_visible(False)
 
         plt.savefig(
-            os.path.join(folder, prefix + "_multi_objective_scores.png"),
-            format="png",
+            os.path.join(folder, prefix + "_multi_objective_scores.pdf"),
+            format="pdf",
             dpi=300,
         )
         plt.clf()
@@ -62,8 +62,8 @@ class PlotUtility(ABC):
         seaborn.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
         plt.title("Correlation Matrix")
         plt.savefig(
-            os.path.join(folder, "correlation_matrix.png"),
-            format="png",
+            os.path.join(folder, "correlation_matrix.pdf"),
+            format="pdf",
             dpi=300,
             bbox_inches="tight",
         )
@@ -121,8 +121,8 @@ class PlotUtility(ABC):
         plt.grid(True, linestyle="--", alpha=0.6)
 
         plt.savefig(
-            os.path.join(folder, "performance_metrics.png"),
-            format="png",
+            os.path.join(folder, "performance_metrics.pdf"),
+            format="pdf",
             dpi=300,
             bbox_inches="tight",
         )
@@ -149,8 +149,8 @@ class PlotUtility(ABC):
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join(training_datetime, folder, "roc_curve.png"),
-            format="png",
+            os.path.join(training_datetime, folder, "roc_curve.pdf"),
+            format="pdf",
             dpi=300,
             bbox_inches="tight",
         )
@@ -178,8 +178,8 @@ class PlotUtility(ABC):
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join(training_datetime, folder, "pr_curve.png"),
-            format="png",
+            os.path.join(training_datetime, folder, "pr_curve.pdf"),
+            format="pdf",
             dpi=300,
             bbox_inches="tight",
         )
@@ -210,8 +210,8 @@ class PlotUtility(ABC):
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join(training_datetime, folder, "confusion_matrix.png"),
-            format="png",
+            os.path.join(training_datetime, folder, "confusion_matrix.pdf"),
+            format="pdf",
             dpi=300,
             bbox_inches="tight",
         )
