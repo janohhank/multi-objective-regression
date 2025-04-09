@@ -1,6 +1,7 @@
 import os
 from abc import ABC
 
+import numpy as np
 import pandas as pd
 import seaborn
 from dto.training_result import TrainingResult
@@ -53,12 +54,15 @@ class PlotUtility(ABC):
             os.path.join(folder, prefix + "_multi_objective_scores.pdf"),
             format="pdf",
             dpi=300,
+            bbox_inches="tight",
         )
         plt.clf()
 
     @staticmethod
-    def plot_correlation_matrix(folder: str, prefix: str, correlation_matrix) -> None:
-        plt.figure(figsize=(14, 14))
+    def plot_correlation_matrix(
+        folder: str, prefix: str, correlation_matrix, fig_size: tuple
+    ) -> None:
+        plt.figure(figsize=fig_size)
         seaborn.heatmap(correlation_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
         plt.title(prefix + " Correlation Matrix")
         plt.savefig(
@@ -138,9 +142,21 @@ class PlotUtility(ABC):
         fpr, tpr, _ = roc_curve(y_test, y_probs)
         roc_auc = auc(fpr, tpr)
 
+        balanced_idx = np.argmin(np.abs(tpr + fpr - 1))
+        balanced_fpr = fpr[balanced_idx]
+        balanced_tpr = tpr[balanced_idx]
+
         plt.figure(figsize=(6, 5))
         plt.plot(fpr, tpr, color="blue", lw=2, label=f"ROC curve (AUC = {roc_auc:.4f})")
         plt.plot([0, 1], [0, 1], color="gray", lw=1, linestyle="--")
+        plt.scatter(
+            balanced_fpr,
+            balanced_tpr,
+            color="green",
+            marker="s",
+            label=f"Balanced FPR/TPR = {balanced_tpr:.4f}",
+            zorder=5,
+        )
         plt.xlabel("False Positive Rate")
         plt.ylabel("True Positive Rate")
         plt.title("ROC Curve")
@@ -166,9 +182,34 @@ class PlotUtility(ABC):
         precision, recall, _ = precision_recall_curve(y_test, y_probs)
         ap_score = average_precision_score(y_test, y_probs)
 
+        f1_scores = 2 * (precision * recall) / (precision + recall + 1e-8)
+        optimal_idx = np.argmax(f1_scores)
+        optimal_precision = precision[optimal_idx]
+        optimal_recall = recall[optimal_idx]
+        optimal_f1 = f1_scores[optimal_idx]
+
+        balance_idx = np.argmin(np.abs(precision - recall))
+        balanced_precision = precision[balance_idx]
+        balanced_recall = recall[balance_idx]
+
         plt.figure(figsize=(6, 5))
         plt.plot(
             recall, precision, label=f"PR Curve (AP = {ap_score:.4f})", color="blue"
+        )
+        plt.scatter(
+            optimal_recall,
+            optimal_precision,
+            color="red",
+            label=f"Max F1 = {optimal_f1:.4f}",
+            zorder=5,
+        )
+        plt.scatter(
+            balanced_recall,
+            balanced_precision,
+            color="green",
+            marker="s",
+            label=f"Balanced P/R = {balanced_precision:.4f}",
+            zorder=5,
         )
         plt.xlabel("Recall")
         plt.ylabel("Precision")
@@ -179,6 +220,84 @@ class PlotUtility(ABC):
 
         plt.savefig(
             os.path.join(training_datetime, folder, "pr_curve.pdf"),
+            format="pdf",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()
+
+    @staticmethod
+    def plot_specificity_sensitivity_curve(
+        training_datetime: str,
+        folder: str,
+        y_test,
+        y_probs,
+    ):
+        sorted_indices = np.argsort(y_probs)
+        sorted_scores = y_probs[sorted_indices]
+        sorted_y_true = y_test.to_numpy()[sorted_indices]
+
+        n = len(y_test)
+        sensitivity = np.zeros(n)
+        specificity = np.zeros(n)
+
+        for i in range(n):
+            predicted_positive = np.zeros(n)
+            predicted_positive[i:] = 1
+
+            tp = np.sum((predicted_positive == 1) & (sorted_y_true == 1))
+            fn = np.sum((predicted_positive == 0) & (sorted_y_true == 1))
+            tn = np.sum((predicted_positive == 0) & (sorted_y_true == 0))
+            fp = np.sum((predicted_positive == 1) & (sorted_y_true == 0))
+
+            sensitivity[i] = tp / (tp + fn) if (tp + fn) > 0 else 0
+            specificity[i] = tn / (tn + fp) if (tn + fp) > 0 else 0
+
+        diff = np.abs(sensitivity - specificity)
+        intersection_idx = np.argmin(diff)
+        crossover_value = sorted_scores[intersection_idx]
+        crossover_sens = sensitivity[intersection_idx]
+
+        print(f"value {sorted_scores}")
+        print(f"value {sorted_scores[intersection_idx]}")
+        print(f"sensitivity {sensitivity[intersection_idx]}")
+        print(f"specificity {specificity[intersection_idx]}")
+
+        plt.figure(figsize=(6, 5))
+        plt.plot(
+            range(1, n + 1),
+            specificity,
+            label="Specificity",
+            color="green",
+            linestyle="-",
+        )
+        plt.plot(
+            range(1, n + 1),
+            sensitivity,
+            label="Sensitivity",
+            color="blue",
+            linestyle="--",
+        )
+        plt.scatter(
+            intersection_idx,
+            crossover_sens,
+            color="green",
+            marker="s",
+            label=f"Sensitivity/Specificity = {crossover_sens:.4f}\nThreshold = {crossover_value:.4f}",
+            zorder=5,
+        )
+        plt.xlabel("Test samples in prediction order")
+        plt.ylabel("Sensitivity / Specificity")
+        plt.ylim(0, 1)
+        plt.xlim(1, n)
+        plt.xticks([1, n], ["Lowest prediction", "Highest prediction"])
+        plt.title("Specificity and sensitivity curve")
+        plt.legend(loc="lower right")
+        plt.grid(True)
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(training_datetime, folder, "spec_sens_curve.pdf"),
             format="pdf",
             dpi=300,
             bbox_inches="tight",

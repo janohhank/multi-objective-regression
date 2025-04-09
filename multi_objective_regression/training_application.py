@@ -59,6 +59,7 @@ class MultiObjectiveTrainingApplication:
             training_datetime,
             "Pearson",
             self.__training_manager.get_pearson_correlation_matrix(),
+            (14, 14),
         )
         PlotUtility.plot_correlation_matrix(
             training_datetime,
@@ -68,6 +69,7 @@ class MultiObjectiveTrainingApplication:
                 orient="index",
                 columns=["Outcome"],
             ),
+            (5, 5),
         )
 
         print(f"Starting initial training on {len(training_setups)} training setups.")
@@ -155,6 +157,9 @@ class MultiObjectiveTrainingApplication:
         y_pred = best_model.model.predict(x_test_scaled)
         PlotUtility.plot_roc_curve(training_datetime, "model", test_dataset[1], y_probs)
         PlotUtility.plot_pr_curve(training_datetime, "model", test_dataset[1], y_probs)
+        PlotUtility.plot_specificity_sensitivity_curve(
+            training_datetime, "model", test_dataset[1], y_probs
+        )
         PlotUtility.plot_confusion_matrix(
             training_datetime, "model", test_dataset[1], y_pred
         )
