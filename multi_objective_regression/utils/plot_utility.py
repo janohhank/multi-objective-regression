@@ -258,11 +258,6 @@ class PlotUtility(ABC):
         crossover_value = sorted_scores[intersection_idx]
         crossover_sens = sensitivity[intersection_idx]
 
-        print(f"value {sorted_scores}")
-        print(f"value {sorted_scores[intersection_idx]}")
-        print(f"sensitivity {sensitivity[intersection_idx]}")
-        print(f"specificity {specificity[intersection_idx]}")
-
         plt.figure(figsize=(6, 5))
         plt.plot(
             range(1, n + 1),
@@ -283,7 +278,7 @@ class PlotUtility(ABC):
             crossover_sens,
             color="green",
             marker="s",
-            label=f"Sensitivity/Specificity = {crossover_sens:.4f}\nThreshold = {crossover_value:.4f}",
+            label=f"Balanced Sens/Spec = {crossover_sens:.4f}\nThreshold = {crossover_value:.4f}",
             zorder=5,
         )
         plt.xlabel("Test samples in prediction order")
