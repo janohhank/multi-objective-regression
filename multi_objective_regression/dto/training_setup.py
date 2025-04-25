@@ -5,3 +5,4 @@ from dataclasses import dataclass
 class TrainingSetup:
     index: int
     features: list[str]
+    target_feature: str

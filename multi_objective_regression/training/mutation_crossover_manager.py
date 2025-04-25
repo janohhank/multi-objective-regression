@@ -36,7 +36,9 @@ class MutationCrossoverManager:
         training_setup_a: TrainingSetup = training_result_a.training_setup
         training_setup_b: TrainingSetup = training_result_b.training_setup
 
-        new_training_setup: TrainingSetup = TrainingSetup(-1, [])
+        new_training_setup: TrainingSetup = TrainingSetup(
+            -1, [], self.__training_parameters.target_feature
+        )
         for feature in self.__training_parameters.features:
             if (
                 random.uniform(0, 1)

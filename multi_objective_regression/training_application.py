@@ -114,6 +114,7 @@ class MultiObjectiveTrainingApplication:
         TrainingResultUtility.save_training_results_report(
             training_datetime,
             final_top_training_results,
+            self.__training_manager.get_suggested_training_ids(),
         )
         PlotUtility.plot_training_multi_objective_scores(
             training_datetime,
@@ -127,6 +128,11 @@ class MultiObjectiveTrainingApplication:
             all_training_results,
             MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
         )
+
+        # Plot objective space with two objectives
+        # PlotUtility.plot_objective_space(
+        #    training_datetime, "accuracy", "precision", all_training_results
+        # )
 
         test_dataset: tuple[DataFrame, DataFrame] = (
             self.__training_manager.get_test_dataset()

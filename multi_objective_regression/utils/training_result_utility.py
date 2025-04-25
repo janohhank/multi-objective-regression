@@ -119,7 +119,9 @@ class TrainingResultUtility(ABC):
 
     @staticmethod
     def save_training_results_report(
-        training_datetime: str, training_results: dict[int, TrainingResult]
+        training_datetime: str,
+        training_results: dict[int, TrainingResult],
+        suggested_training_ids: list[int],
     ) -> None:
         with open(
             os.path.join(
@@ -137,3 +139,13 @@ class TrainingResultUtility(ABC):
                 file.write(
                     f"{index},{training_result.validation_results["multi_objective_score"]},[{training_result.training_setup.features}]\n"
                 )
+
+        with open(
+            os.path.join(
+                training_datetime,
+                "genetic_algorithm_report.txt",
+            ),
+            "w",
+        ) as file:
+            for training_id in suggested_training_ids:
+                file.write(f"{str(training_id)}\n")

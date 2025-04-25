@@ -37,6 +37,8 @@ class TrainingManager:
     __point_biserial_correlation_matrix = None
     __correlation_to_target_feature: DataFrame = None
 
+    __suggested_training_ids = None
+
     def __init__(
         self,
         training_parameters: TrainingParameters,
@@ -48,12 +50,16 @@ class TrainingManager:
         self.__mutation_crossover_manager = MutationCrossoverManager(
             self.__training_parameters
         )
+        self.__suggested_training_ids = []
 
     def get_pearson_correlation_matrix(self):
         return self.__pearson_correlation_matrix
 
     def get_point_biserial_correlation_matrix(self):
         return self.__point_biserial_correlation_matrix
+
+    def get_suggested_training_ids(self):
+        return self.__suggested_training_ids
 
     def get_test_dataset(self):
         return self.__x_test, self.__y_test
@@ -193,6 +199,7 @@ class TrainingManager:
                     training_setup_workspace[new_candidate_training_index] = (
                         training_setup
                     )
+                    self.__suggested_training_ids.append(new_candidate_training_index)
 
         print(f"Overall inspected training setups: {new_candidate_training_index}.")
         return final_top_n_training_results, all_training_results

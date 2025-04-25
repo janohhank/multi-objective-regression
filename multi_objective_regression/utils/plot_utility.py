@@ -1,4 +1,5 @@
 import os
+import random
 from abc import ABC
 
 import numpy as np
@@ -293,6 +294,73 @@ class PlotUtility(ABC):
 
         plt.savefig(
             os.path.join(training_datetime, folder, "spec_sens_curve.pdf"),
+            format="pdf",
+            dpi=300,
+            bbox_inches="tight",
+        )
+        plt.clf()
+
+    @staticmethod
+    def plot_objective_space(
+        training_datetime: str,
+        objective_component_x: str,
+        objective_component_y: str,
+        all_training_results: dict[int, TrainingResult],
+    ):
+        all_training_results: dict[int, TrainingResult] = dict(
+            sorted(
+                all_training_results.items(),
+                key=lambda item: item[1].validation_results["multi_objective_score"],
+                reverse=True,
+            )
+        )
+
+        m: float = -0.5 / 0.5
+        training_result = random.choice(list(all_training_results.values()))
+        x_min = 0.5 * training_result.test_results[objective_component_x] - 1.0 / 2
+        x_max = 0.5 * training_result.test_results[objective_component_x] + 1.0 / 2
+        x_vals = np.linspace(x_min, x_max, 100)
+        y_vals = (
+            m * (x_vals - 0.5 * training_result.test_results[objective_component_x])
+            + 0.5 * training_result.test_results[objective_component_y]
+        )
+
+        plt.figure(figsize=(6, 5))
+        plt.rc("text", usetex=True)
+        plt.rc("font", family="serif")
+        for training_result in all_training_results.values():
+            plt.scatter(
+                0.5 * training_result.test_results[objective_component_x],
+                0.5 * training_result.test_results[objective_component_y],
+                color="blue",
+                zorder=5,
+                alpha=0.5,
+            )
+        plt.plot(x_vals, y_vals, linestyle="--", label=r"$-w_1/w_2$", color="grey")
+        plt.scatter(
+            0.5
+            * list(all_training_results.values())[0].test_results[
+                objective_component_x
+            ],
+            0.5
+            * list(all_training_results.values())[0].test_results[
+                objective_component_y
+            ],
+            color="green",
+            zorder=5,
+            alpha=0.5,
+        )
+        plt.xlabel(r"$w_1 * \mathcal{L}_{" + objective_component_x + "}(\mathbf{h}) $")
+        plt.ylabel(r"$w_2 * \mathcal{L}_{" + objective_component_y + "}(\mathbf{h})$")
+        plt.ylim(0.3, 0.5)
+        plt.xlim(0.3, 0.5)
+        plt.title("Objective Space")
+        plt.legend(loc="lower right")
+        plt.grid(True)
+        plt.tight_layout()
+
+        plt.savefig(
+            os.path.join(training_datetime, "objective_space.pdf"),
             format="pdf",
             dpi=300,
             bbox_inches="tight",

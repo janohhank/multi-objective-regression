@@ -64,7 +64,9 @@ class TrainingSetupGenerator(ABC):
                 if skip:
                     continue
 
-            training_setups[index] = TrainingSetup(index, list(combination))
+            training_setups[index] = TrainingSetup(
+                index, list(combination), training_parameters.target_feature
+            )
             index = index + 1
 
         return training_setups
@@ -97,7 +99,9 @@ class TrainingSetupGenerator(ABC):
                 if skip:
                     continue
 
-                training_setups[index] = TrainingSetup(index, list(combination))
+                training_setups[index] = TrainingSetup(
+                    index, list(combination), training_parameters.target_feature
+                )
                 index = index + 1
 
         return training_setups
