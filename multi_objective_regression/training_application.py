@@ -55,22 +55,22 @@ class MultiObjectiveTrainingApplication:
 
         print("Prepare train, validation and test datasets.")
         self.__training_manager.prepare_dataset()
-        PlotUtility.plot_correlation_matrix(
-            training_datetime,
-            "Pearson",
-            self.__training_manager.get_pearson_correlation_matrix(),
-            (14, 14),
-        )
-        PlotUtility.plot_correlation_matrix(
-            training_datetime,
-            "Point-biserial",
-            DataFrame.from_dict(
-                self.__training_manager.get_point_biserial_correlation_matrix(),
-                orient="index",
-                columns=["Outcome"],
-            ),
-            (5, 5),
-        )
+        # PlotUtility.plot_correlation_matrix(
+        #    training_datetime,
+        #    "Pearson",
+        #    self.__training_manager.get_pearson_correlation_matrix(),
+        #    (14, 14),
+        # )
+        # PlotUtility.plot_correlation_matrix(
+        #    training_datetime,
+        #    "Point-biserial",
+        #    DataFrame.from_dict(
+        #        self.__training_manager.get_point_biserial_correlation_matrix(),
+        #        orient="index",
+        #        columns=["Outcome"],
+        #    ),
+        #    (5, 5),
+        # )
 
         print(f"Starting initial training on {len(training_setups)} training setups.")
         training_results: dict[int, TrainingResult] = (

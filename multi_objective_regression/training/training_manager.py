@@ -65,32 +65,84 @@ class TrainingManager:
         return self.__x_test, self.__y_test
 
     def prepare_dataset(self):
-        print("Loading train dataset.")
-        dataset: DataFrame = pandas.read_csv(self.__training_parameters.train_dataset)
-        x: DataFrame = dataset.drop(self.__training_parameters.target_feature, axis=1)
-        y: DataFrame = dataset[self.__training_parameters.target_feature].astype(int)
+        print("Loading dataset.")
 
-        print("Calculate pearson correlation matrix.")
-        self.__pearson_correlation_matrix = dataset.corr()
-        self.__correlation_to_target_feature: DataFrame = (
-            self.__pearson_correlation_matrix[self.__training_parameters.target_feature]
-        )
-
-        print("Calculate point-biserial correlation matrix.")
-        self.__point_biserial_correlation_matrix = {
-            column: pointbiserialr(x[column], y).correlation for column in x.columns
-        }
-
-        print("Split dataset into train, validation and test.")
-        self.__x_train, x_temp, self.__y_train, y_temp = train_test_split(
-            x, y, test_size=0.3, stratify=y, random_state=42
-        )
-
-        self.__x_validation, self.__x_test, self.__y_validation, self.__y_test = (
-            train_test_split(
-                x_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42
+        if (
+            self.__training_parameters.validation_dataset is not None
+            and self.__training_parameters.test_dataset is not None
+        ):
+            print("Predefined train and validation datasets are available.")
+            train_dataset: DataFrame = pandas.read_csv(
+                self.__training_parameters.train_dataset
             )
-        )
+            self.__x_train = train_dataset.drop(
+                self.__training_parameters.target_feature, axis=1
+            )
+            self.__y_train = train_dataset[
+                self.__training_parameters.target_feature
+            ].astype(int)
+
+            validation_dataset: DataFrame = pandas.read_csv(
+                self.__training_parameters.validation_dataset
+            )
+            self.__x_validation = validation_dataset.drop(
+                self.__training_parameters.target_feature, axis=1
+            )
+            self.__y_validation = validation_dataset[
+                self.__training_parameters.target_feature
+            ].astype(int)
+
+            test_dataset: DataFrame = pandas.read_csv(
+                self.__training_parameters.test_dataset
+            )
+            self.__x_test = test_dataset.drop(
+                self.__training_parameters.target_feature, axis=1
+            )
+            self.__y_test = test_dataset[
+                self.__training_parameters.target_feature
+            ].astype(int)
+
+            print("Calculate pearson correlation matrix.")
+            self.__pearson_correlation_matrix = train_dataset.corr()
+            self.__correlation_to_target_feature: DataFrame = (
+                self.__pearson_correlation_matrix[
+                    self.__training_parameters.target_feature
+                ]
+            )
+        else:
+            dataset: DataFrame = pandas.read_csv(
+                self.__training_parameters.train_dataset
+            )
+            x: DataFrame = dataset.drop(
+                self.__training_parameters.target_feature, axis=1
+            )
+            y: DataFrame = dataset[self.__training_parameters.target_feature].astype(
+                int
+            )
+
+            print("Calculate pearson correlation matrix.")
+            self.__pearson_correlation_matrix = dataset.corr()
+            self.__correlation_to_target_feature: DataFrame = (
+                self.__pearson_correlation_matrix[
+                    self.__training_parameters.target_feature
+                ]
+            )
+
+            print("Calculate point-biserial correlation matrix.")
+            self.__point_biserial_correlation_matrix = {
+                column: pointbiserialr(x[column], y).correlation for column in x.columns
+            }
+
+            print("Split dataset into train, validation and test.")
+            self.__x_train, x_temp, self.__y_train, y_temp = train_test_split(
+                x, y, test_size=0.3, stratify=y, random_state=42
+            )
+
+            self.__x_validation, self.__x_test, self.__y_validation, self.__y_test = (
+                train_test_split(
+                    x_temp, y_temp, test_size=0.5, stratify=y_temp, random_state=42
+                )
+            )
 
         print(
             "Train dataset target variable distribution:",

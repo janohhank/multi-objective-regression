@@ -7,6 +7,8 @@ from orjson import orjson
 @dataclass
 class TrainingParameters:
     train_dataset: typing.Optional[str] = None
+    validation_dataset: typing.Optional[str] = None
+    test_dataset: typing.Optional[str] = None
     target_feature: typing.Optional[str] = None
     features: typing.Optional[list[str]] = None
     excluded_feature_sets: typing.Optional[list[list[str]]] = None
@@ -25,6 +27,10 @@ class TrainingParameters:
 
         return TrainingParameters(
             train_dataset=data["train_dataset"] if "train_dataset" in data else None,
+            validation_dataset=(
+                data["validation_dataset"] if "validation_dataset" in data else None
+            ),
+            test_dataset=data["test_dataset"] if "test_dataset" in data else None,
             target_feature=data["target_feature"] if "target_feature" in data else None,
             features=data["features"] if "features" in data else [],
             excluded_feature_sets=(
