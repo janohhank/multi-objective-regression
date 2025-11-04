@@ -7,6 +7,7 @@ import numpy as np
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
+from imblearn.metrics import specificity_score
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -111,6 +112,7 @@ class LogisticRegressionTraining:
                 "accuracy": 0.0,
                 "precision": 0.0,
                 "recall": 0.0,
+                "specificity": 0.0,
                 "f1_score": 0.0,
                 "roc_auc": 0.0,
                 "pr_auc": 0.0,
@@ -146,6 +148,9 @@ class LogisticRegressionTraining:
         # Recall
         recall: float = recall_score(y_test, y_pred)
 
+        # Recall
+        specificity: float = specificity_score(y_test, y_pred)
+
         # F1 score
         f1_score_value: float = f1_score(y_test, y_pred)
 
@@ -176,6 +181,10 @@ class LogisticRegressionTraining:
             ]
             * recall
             + self.__training_parameters.multi_objective_function_weights[
+                "specificity_weight"
+            ]
+            * specificity
+            + self.__training_parameters.multi_objective_function_weights[
                 "roc_auc_weight"
             ]
             * roc_auc
@@ -197,6 +206,7 @@ class LogisticRegressionTraining:
             "accuracy": accuracy,
             "precision": precision,
             "recall": recall,
+            "specificity": specificity,
             "f1_score": f1_score_value,
             "roc_auc": roc_auc,
             "pr_auc": pr_auc,

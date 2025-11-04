@@ -5,6 +5,7 @@ import os.path
 import joblib
 import pandas
 import seaborn
+from imblearn.metrics import specificity_score
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 from sklearn.metrics import (
@@ -55,7 +56,7 @@ class MultiObjectivePredictorApplication:
         plt.tight_layout()
 
         plt.savefig(
-            os.path.join("confusion_matrix.pdf"),
+            os.path.join("optim_confusion_matrix.pdf"),
             format="pdf",
             dpi=300,
             bbox_inches="tight",
@@ -68,9 +69,8 @@ class MultiObjectivePredictorApplication:
 
         pattern = os.path.join(self.__MODEL_PATH, "*_result.json")
         matching_files = glob.glob(pattern)
-        for file_path in matching_files:
-            with open(file_path) as file:
-                training_result_file_content = file.read()
+        with open(matching_files[0]) as file:
+            training_result_file_content = file.read()
 
         training_result: TrainingResult = TrainingResult.from_json(
             training_result_file_content
@@ -89,6 +89,7 @@ class MultiObjectivePredictorApplication:
         accuracy: float = accuracy_score(y_test, y_pred)
         precision: float = precision_score(y_test, y_pred)
         recall: float = recall_score(y_test, y_pred)
+        specificity: float = specificity_score(y_test, y_pred)
         f1_score_value: float = f1_score(y_test, y_pred)
         roc_auc: float = roc_auc_score(y_test, y_probs)
         pr_auc: float = average_precision_score(y_test, y_probs)
@@ -97,6 +98,7 @@ class MultiObjectivePredictorApplication:
         print(f"Accuracy: {accuracy}")
         print(f"Precision: {precision}")
         print(f"Recall: {recall}")
+        print(f"Specificity: {specificity}")
         print(f"F1 score: {f1_score_value}")
         print(f"ROC-AUC: {roc_auc}")
         print(f"PR-AUC: {pr_auc}")
@@ -125,6 +127,7 @@ def main():
         "--threshold",
         type=float,
         required=False,
+        default=0.5,
         help="Threshold.",
     )
 

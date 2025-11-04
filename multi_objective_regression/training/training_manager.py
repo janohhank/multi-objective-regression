@@ -183,7 +183,7 @@ class TrainingManager:
         current_training_index: int,
         initial_training_top_n_results: dict[int, TrainingResult],
         all_training_results: dict[int, TrainingResult],
-    ) -> (dict[int, TrainingResult], dict[int, TrainingResult]):
+    ) -> tuple[dict[int, TrainingResult], dict[int, TrainingResult]]:
         final_top_n_training_results: dict[int, TrainingResult] = deepcopy(
             initial_training_top_n_results
         )
