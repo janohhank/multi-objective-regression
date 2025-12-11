@@ -26,16 +26,15 @@ class MultiObjectivePredictorApplication:
     __THRESHOLD: float = None
 
     def __init__(
-        self, model_path: str, dataset_path: str, threshold: float = 0.5
+        self, model_path: str, test_dataset_path: str, threshold: float = 0.5
     ) -> None:
         self.__MODEL_PATH = model_path
-        self.__TEST_DATASET_PATH = dataset_path
+        self.__TEST_DATASET_PATH = test_dataset_path
         self.__THRESHOLD = threshold
 
     def start_prediction(self) -> None:
         print(
-            "Getting the model, standard scaler and the selected features from {}.",
-            self.__MODEL_PATH,
+            f"Getting the model, standard scaler and the selected features from {self.__MODEL_PATH}."
         )
         model = joblib.load(os.path.join(self.__MODEL_PATH, "model.pkl"))
         scaler = joblib.load(os.path.join(self.__MODEL_PATH, "scaler.pkl"))
@@ -50,7 +49,7 @@ class MultiObjectivePredictorApplication:
         )
 
         print(
-            "Loading and preparing the test dataset from {}.", self.__TEST_DATASET_PATH
+            f"Loading and preparing the test dataset from {self.__TEST_DATASET_PATH}."
         )
         test_dataset: DataFrame = pandas.read_csv(self.__TEST_DATASET_PATH)
         x_test_reduced: Series = test_dataset[
@@ -64,7 +63,7 @@ class MultiObjectivePredictorApplication:
         print("Predicting on the test set.")
         y_probs = model.predict_proba(x_test_scaled)[:, 1]
 
-        print("Calculating results with threshold {}.", self.__THRESHOLD)
+        print(f"Calculating results with threshold {self.__THRESHOLD}.")
         print(
             f"Accuracy: {AccuracyComponent().score(y_test, y_probs, self.__THRESHOLD)}"
         )
@@ -111,7 +110,7 @@ def main() -> None:
 
     application: MultiObjectivePredictorApplication = (
         MultiObjectivePredictorApplication(
-            args.model_path, args.dataset_path, args.threshold
+            args.model_path, args.test_dataset_path, args.threshold
         )
     )
     application.start_prediction()
