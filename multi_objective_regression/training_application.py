@@ -7,11 +7,13 @@ from pandas import DataFrame
 
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
-from dto.training_setup import TrainingSetup
-from training.training_manager import TrainingManager
-from training.training_setup_generator import (
-    TrainingSetupGenerator,
+from training.deap.deap_training_manager import (
+    DeapTrainingManager,
 )
+from training.morse.morse_training_manager import (
+    MorseTrainingManager,
+)
+from training.training_manager import TrainingManager
 from utils.plot_utility import PlotUtility
 from utils.training_parameter_utility import (
     TrainingParameterUtility,
@@ -23,12 +25,7 @@ from utils.training_utility import TrainingUtility
 
 
 class MultiObjectiveTrainingApplication:
-    __VALIDATION_DATASET_PREFIX: str = "Validation dataset"
-    __INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME: str = "initial_top_n_training_results"
-    __FINAL_TRAINING_RESULT_DIR_NAME: str = "final_top_n_training_results"
-
     __training_parameters: TrainingParameters = None
-    __training_manager: TrainingManager = None
 
     def __init__(self, training_parameters_file_path: str) -> None:
         self.__training_parameters: TrainingParameters = (
@@ -37,137 +34,83 @@ class MultiObjectiveTrainingApplication:
             )
         )
 
-        self.__training_manager = TrainingManager(self.__training_parameters)
+    def start(self):
+        for algorithm in self.__training_parameters.algorithms:
+            if algorithm.name == "MORSE":
+                training_manager = MorseTrainingManager(self.__training_parameters)
+            elif algorithm.name == "DEAP":
+                training_manager = DeapTrainingManager(self.__training_parameters)
+            else:
+                print(f"[ERROR] Unknown algorithm type: {algorithm.name}")
+                continue
+            self.__start_training(training_manager)
 
-    def start_training(self):
-        print("Starting training")
+    def __start_training(self, training_manager: TrainingManager):
+        print("Start training.")
         start: float = time.perf_counter()
 
-        training_datetime = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
-        os.makedirs(training_datetime)
-
-        print(
-            f"Generating {self.__training_parameters.initial_training_setup_count} initial training setups."
+        # Main result directory is the date time
+        main_result_directory: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        result_directory: str = os.path.join(
+            main_result_directory, training_manager.TYPE
         )
-        training_setups: dict[int, TrainingSetup] = (
-            TrainingSetupGenerator.generate_training_setups(self.__training_parameters)
-        )
+        os.makedirs(result_directory)
 
-        print("Prepare train, validation and test datasets.")
-        self.__training_manager.prepare_dataset()
-        # PlotUtility.plot_correlation_matrix(
-        #    training_datetime,
-        #    "Pearson",
-        #    self.__training_manager.get_pearson_correlation_matrix(),
-        #    (14, 14),
-        # )
-        # PlotUtility.plot_correlation_matrix(
-        #    training_datetime,
-        #    "Point-biserial",
-        #    DataFrame.from_dict(
-        #        self.__training_manager.get_point_biserial_correlation_matrix(),
-        #        orient="index",
-        #        columns=["Outcome"],
-        #    ),
-        #    (5, 5),
-        # )
+        # Prepare datasets.
+        training_manager.prepare_dataset()
 
-        print(f"Starting initial training on {len(training_setups)} training setups.")
-        training_results: dict[int, TrainingResult] = (
-            self.__training_manager.start_training(training_setups)
+        # Start training with meta-optimization.
+        top_training_results: dict[int, TrainingResult] = (
+            training_manager.start_training()
         )
 
-        print(
-            f"Save top {self.__training_parameters.initial_training_top_n_selection_count} initial training results."
-        )
-        top_initial_training_results: dict[int, TrainingResult] = (
-            TrainingResultUtility.get_top_n_training_results(
-                training_results,
-                self.__training_parameters.initial_training_top_n_selection_count,
-            )
-        )
-        TrainingResultUtility.save_training_results(
-            training_datetime,
-            MultiObjectiveTrainingApplication.__INITIAL_TOP_N_TRAINING_RESULT_DIR_NAME,
-            top_initial_training_results,
-        )
-        PlotUtility.plot_training_multi_objective_scores(
-            training_datetime,
-            "initial_top_n",
-            top_initial_training_results,
-            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
-        )
-
-        print("Starting meta-optimization training.")
-        final_top_training_results, all_training_results = (
-            self.__training_manager.start_meta_optimization(
-                len(training_setups) + 1, top_initial_training_results, training_results
-            )
-        )
-
-        print("Save final training results.")
-        TrainingResultUtility.save_training_results(
-            training_datetime,
-            MultiObjectiveTrainingApplication.__FINAL_TRAINING_RESULT_DIR_NAME,
-            final_top_training_results,
-        )
-        TrainingResultUtility.save_training_results_report(
-            training_datetime,
-            final_top_training_results,
-            self.__training_manager.get_suggested_training_ids(),
-        )
-        PlotUtility.plot_training_multi_objective_scores(
-            training_datetime,
-            "final_top_n",
-            final_top_training_results,
-            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
-        )
-        PlotUtility.plot_training_multi_objective_scores(
-            training_datetime,
-            "all",
-            all_training_results,
-            MultiObjectiveTrainingApplication.__VALIDATION_DATASET_PREFIX,
-        )
-
-        # Plot objective space with two objectives
-        # PlotUtility.plot_objective_space(
-        #    training_datetime, "accuracy", "precision", all_training_results
-        # )
-
-        test_dataset: tuple[DataFrame, DataFrame] = (
-            self.__training_manager.get_test_dataset()
-        )
+        print("Saving the best model.")
         best_model: TrainingResult = TrainingResultUtility.get_best_training_result(
-            final_top_training_results
+            top_training_results
         )
-
         TrainingResultUtility.save_model(
-            training_datetime,
+            result_directory,
             "model",
             best_model,
         )
 
+        # Prepare test dataset with selected features
+        test_dataset: tuple[DataFrame, DataFrame] = training_manager.get_test_dataset()
+        x_test_reduced = test_dataset[0][best_model.training_setup.features].copy()
+        x_test_scaled = best_model.scaler.transform(x_test_reduced)
+
+        # Prepare validation dataset with selected features
+        validation_dataset: tuple[DataFrame, DataFrame] = (
+            training_manager.get_validation_dataset()
+        )
+        x_validation_reduced = validation_dataset[0][
+            best_model.training_setup.features
+        ].copy()
+        x_validation_scaled = best_model.scaler.transform(x_validation_reduced)
+
+        print("Saving the test dataset.")
         TrainingUtility.save_dataset(
-            training_datetime,
+            result_directory,
             "test_dataset",
             test_dataset,
         )
 
-        PlotUtility.plot_metric_comparison(
-            training_datetime, 4, final_top_training_results
-        )
+        print("Saving plots.")
+        PlotUtility.plot_metric_comparison(result_directory, 4, top_training_results)
 
-        x_test_reduced = test_dataset[0][best_model.training_setup.features].copy()
-        x_test_scaled = best_model.scaler.transform(x_test_reduced)
+        # Using test dataset
         y_probs = best_model.model.predict_proba(x_test_scaled)[:, 1]
         y_pred = best_model.model.predict(x_test_scaled)
-        PlotUtility.plot_roc_curve(training_datetime, "model", test_dataset[1], y_probs)
-        PlotUtility.plot_pr_curve(training_datetime, "model", test_dataset[1], y_probs)
-        PlotUtility.plot_specificity_sensitivity_curve(
-            training_datetime, "model", test_dataset[1], y_probs
-        )
+        PlotUtility.plot_roc_curve(result_directory, "model", test_dataset[1], y_probs)
+        PlotUtility.plot_pr_curve(result_directory, "model", test_dataset[1], y_probs)
         PlotUtility.plot_confusion_matrix(
-            training_datetime, "model", test_dataset[1], y_pred
+            result_directory, "model", test_dataset[1], y_pred
+        )
+
+        # Using validation dataset
+        y_probs = best_model.model.predict_proba(x_validation_scaled)[:, 1]
+        PlotUtility.plot_specificity_sensitivity_curve(
+            result_directory, "model", test_dataset[1], y_probs
         )
 
         elapsed: float = time.perf_counter() - start
@@ -188,7 +131,7 @@ def main():
     application: MultiObjectiveTrainingApplication = MultiObjectiveTrainingApplication(
         args.training_parameters_path
     )
-    application.start_training()
+    application.start()
 
 
 if __name__ == "__main__":

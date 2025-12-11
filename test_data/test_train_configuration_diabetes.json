@@ -15,31 +15,37 @@
     "Age",
     "ln_age"
   ],
-  "excluded_feature_sets": [
-    [
-      "ln_pregnancies",
-      "Pregnancies"
+  "algorithms": ["MORSE", "DEAP"],
+  "morse": {
+    "excluded_feature_sets": [
+      [
+        "ln_pregnancies",
+        "Pregnancies"
+      ],
+      [
+        "ln_insulin",
+        "Insulin"
+      ],
+      [
+        "ln_diabetes_pedigree_function",
+        "DiabetesPedigreeFunction"
+      ],
+      [
+        "ln_age",
+        "Age"
+      ]
     ],
-    [
-      "ln_insulin",
-      "Insulin"
-    ],
-    [
-      "ln_diabetes_pedigree_function",
-      "DiabetesPedigreeFunction"
-    ],
-    [
-      "ln_age",
-      "Age"
-    ]
-  ],
-  "initial_training_setup_generator_type": "RANDOM_COMBINATIONS",
-  "initial_training_setup_count": 48,
-  "initial_training_top_n_selection_count": 8,
-  "mutation_and_crossover_iteration": 8192,
-  "mutation_and_crossover_balance": 0.5,
-  "mutation_feature_change_probability": 0.3,
-  "crossover_feature_selection_probability": 0.5,
+    "initial_training_setup_generator_type": "RANDOM_COMBINATIONS",
+    "initial_training_setup_count": 48,
+    "initial_training_top_n_selection_count": 8,
+    "mutation_and_crossover_iteration": 8192,
+    "mutation_and_crossover_balance": 0.5,
+    "mutation_feature_change_probability": 0.3,
+    "crossover_feature_selection_probability": 0.5
+  },
+  "deap": {
+    "iteration": 48
+  },
   "multi_objective_function_weights": {
     "accuracy_weight": 0.0,
     "precision_weight": 0.0,
