@@ -4,112 +4,88 @@ import os.path
 
 import joblib
 import pandas
-import seaborn
-from imblearn.metrics import specificity_score
-from matplotlib import pyplot as plt
-from pandas import DataFrame
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    recall_score,
-    f1_score,
-    roc_auc_score,
-    average_precision_score,
-    confusion_matrix,
-)
+from numpy import ndarray
+from pandas import DataFrame, Series
 
 from dto.training_result import TrainingResult
+from training.objective_components import (
+    AccuracyComponent,
+    PrecisionComponent,
+    RecallComponent,
+    SpecificityComponent,
+    F1ScoreComponent,
+    PrAucComponent,
+    GiniComponent,
+    RocAucComponent,
+)
 
 
 class MultiObjectivePredictorApplication:
     __MODEL_PATH: str = None
-    __DATASET_PATH: str = None
+    __TEST_DATASET_PATH: str = None
     __THRESHOLD: float = None
 
     def __init__(
         self, model_path: str, dataset_path: str, threshold: float = 0.5
     ) -> None:
         self.__MODEL_PATH = model_path
-        self.__DATASET_PATH = dataset_path
+        self.__TEST_DATASET_PATH = dataset_path
         self.__THRESHOLD = threshold
 
-    def plot_confusion_matrix(
-        self,
-        y_test,
-        y_pred,
-    ):
-        cm = confusion_matrix(y_test, y_pred)
-        labels = ["Negative", "Positive"]  # Adjust as needed
-
-        plt.figure(figsize=(5, 4))
-        seaborn.heatmap(
-            cm,
-            annot=True,
-            fmt="d",
-            cmap="Blues",
-            xticklabels=labels,
-            yticklabels=labels,
-        )
-        plt.xlabel("Predicted Label")
-        plt.ylabel("True Label")
-        plt.title("Confusion Matrix")
-        plt.tight_layout()
-
-        plt.savefig(
-            os.path.join("optim_confusion_matrix.pdf"),
-            format="pdf",
-            dpi=300,
-            bbox_inches="tight",
-        )
-        plt.clf()
-
     def start_prediction(self) -> None:
+        print(
+            "Getting the model, standard scaler and the selected features from {}.",
+            self.__MODEL_PATH,
+        )
         model = joblib.load(os.path.join(self.__MODEL_PATH, "model.pkl"))
         scaler = joblib.load(os.path.join(self.__MODEL_PATH, "scaler.pkl"))
 
         pattern = os.path.join(self.__MODEL_PATH, "*_result.json")
         matching_files = glob.glob(pattern)
         with open(matching_files[0]) as file:
-            training_result_file_content = file.read()
+            training_result_file_content: str = file.read()
 
         training_result: TrainingResult = TrainingResult.from_json(
             training_result_file_content
         )
 
-        test_dataset: DataFrame = pandas.read_csv(self.__DATASET_PATH)
-        x_test_reduced = test_dataset[training_result.training_setup["features"]].copy()
-        x_test_scaled = scaler.transform(x_test_reduced)
+        print(
+            "Loading and preparing the test dataset from {}.", self.__TEST_DATASET_PATH
+        )
+        test_dataset: DataFrame = pandas.read_csv(self.__TEST_DATASET_PATH)
+        x_test_reduced: Series = test_dataset[
+            training_result.training_setup["features"]
+        ].copy()
+        x_test_scaled: ndarray = scaler.transform(x_test_reduced)
         y_test: DataFrame = test_dataset[
             training_result.training_setup["target_feature"]
         ].copy()
 
+        print("Predicting on the test set.")
         y_probs = model.predict_proba(x_test_scaled)[:, 1]
-        y_pred = (y_probs >= self.__THRESHOLD).astype(int)
 
-        accuracy: float = accuracy_score(y_test, y_pred)
-        precision: float = precision_score(y_test, y_pred)
-        recall: float = recall_score(y_test, y_pred)
-        specificity: float = specificity_score(y_test, y_pred)
-        f1_score_value: float = f1_score(y_test, y_pred)
-        roc_auc: float = roc_auc_score(y_test, y_probs)
-        pr_auc: float = average_precision_score(y_test, y_probs)
-        gini_score: float = 2 * roc_auc - 1
-
-        print(f"Accuracy: {accuracy}")
-        print(f"Precision: {precision}")
-        print(f"Recall: {recall}")
-        print(f"Specificity: {specificity}")
-        print(f"F1 score: {f1_score_value}")
-        print(f"ROC-AUC: {roc_auc}")
-        print(f"PR-AUC: {pr_auc}")
-        print(f"Gini score: {gini_score}")
-
-        self.plot_confusion_matrix(y_test, y_pred)
+        print("Calculating results with threshold {}.", self.__THRESHOLD)
+        print(
+            f"Accuracy: {AccuracyComponent().score(y_test, y_probs, self.__THRESHOLD)}"
+        )
+        print(
+            f"Precision: {PrecisionComponent().score(y_test, y_probs, self.__THRESHOLD)}"
+        )
+        print(f"Recall: {RecallComponent().score(y_test, y_probs, self.__THRESHOLD)}")
+        print(
+            f"Specificity: {SpecificityComponent().score(y_test, y_probs, self.__THRESHOLD)}"
+        )
+        print(
+            f"F1 score: {F1ScoreComponent().score(y_test, y_probs, self.__THRESHOLD)}"
+        )
+        print(f"ROC-AUC: {RocAucComponent().score(y_test, y_probs, self.__THRESHOLD)}")
+        print(f"PR-AUC: {PrAucComponent().score(y_test, y_probs, self.__THRESHOLD)}")
+        print(f"Gini score: {GiniComponent().score(y_test, y_probs, self.__THRESHOLD)}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Multi-objective predictor application."
+        description="Predictor application for multi-objective regression training models."
     )
     parser.add_argument(
         "--model_path",
@@ -118,17 +94,17 @@ def main():
         help="Saved model path.",
     )
     parser.add_argument(
-        "--dataset_path",
+        "--test_dataset_path",
         type=str,
         required=True,
-        help="Dataset path.",
+        help="Test dataset path.",
     )
     parser.add_argument(
         "--threshold",
         type=float,
         required=False,
         default=0.5,
-        help="Threshold.",
+        help="Class divisor threshold.",
     )
 
     args = parser.parse_args()
