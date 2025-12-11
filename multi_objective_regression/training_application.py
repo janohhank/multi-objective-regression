@@ -36,9 +36,9 @@ class MultiObjectiveTrainingApplication:
 
     def start(self):
         for algorithm in self.__training_parameters.algorithms:
-            if algorithm.name == "MORSE":
+            if algorithm == "MORSE":
                 training_manager = MorseTrainingManager(self.__training_parameters)
-            elif algorithm.name == "DEAP":
+            elif algorithm == "DEAP":
                 training_manager = DeapTrainingManager(self.__training_parameters)
             else:
                 print(f"[ERROR] Unknown algorithm type: {algorithm.name}")
@@ -61,7 +61,7 @@ class MultiObjectiveTrainingApplication:
 
         # Start training with meta-optimization.
         top_training_results: dict[int, TrainingResult] = (
-            training_manager.start_training()
+            training_manager.start_training(result_directory)
         )
 
         print("Saving the best model.")
@@ -101,16 +101,16 @@ class MultiObjectiveTrainingApplication:
         # Using test dataset
         y_probs = best_model.model.predict_proba(x_test_scaled)[:, 1]
         y_pred = best_model.model.predict(x_test_scaled)
-        PlotUtility.plot_roc_curve(result_directory, "model", test_dataset[1], y_probs)
-        PlotUtility.plot_pr_curve(result_directory, "model", test_dataset[1], y_probs)
-        PlotUtility.plot_confusion_matrix(
-            result_directory, "model", test_dataset[1], y_pred
-        )
+        y_test = test_dataset[1]
+        PlotUtility.plot_roc_curve(result_directory, "model", y_test, y_probs)
+        PlotUtility.plot_pr_curve(result_directory, "model", y_test, y_probs)
+        PlotUtility.plot_confusion_matrix(result_directory, "model", y_test, y_pred)
 
         # Using validation dataset
         y_probs = best_model.model.predict_proba(x_validation_scaled)[:, 1]
+        y_validation = validation_dataset[1]
         PlotUtility.plot_specificity_sensitivity_curve(
-            result_directory, "model", test_dataset[1], y_probs
+            result_directory, "model", y_validation, y_probs
         )
 
         elapsed: float = time.perf_counter() - start

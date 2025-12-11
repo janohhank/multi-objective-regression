@@ -5,9 +5,9 @@ from copy import deepcopy
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from training.logistic_regression_training import LogisticRegressionTraining
+from training.morse.logistic_regression_training import LogisticRegressionTraining
+from training.morse.mutation_crossover_manager import MutationCrossoverManager
 from training.morse.training_setup_generator import TrainingSetupGenerator
-from training.mutation_crossover_manager import MutationCrossoverManager
 from training.training_manager import TrainingManager
 from utils.constants import ConstantUtility
 from utils.plot_utility import PlotUtility
@@ -38,20 +38,20 @@ class MorseTrainingManager(TrainingManager):
 
     def start_training(self, result_directory: str) -> dict[int, TrainingResult]:
         print(
-            f"Generating {self._training_parameters.initial_training_setup_count} initial training setups."
+            f"Generating {self._training_parameters.morse.initial_training_setup_count} initial training setups."
         )
         training_setups: dict[int, TrainingSetup] = (
             TrainingSetupGenerator.generate_training_setups(self._training_parameters)
         )
 
         print(f"Start initial population training.")
-        training_results: dict[int, TrainingResult] = (
-            self.__logistic_regression_training(training_setups)
+        training_results: dict[int, TrainingResult] = self.__train_logistic_regression(
+            training_setups
         )
         top_initial_training_results: dict[int, TrainingResult] = (
             TrainingResultUtility.get_top_n_training_results(
                 training_results,
-                self._training_parameters.initial_training_top_n_selection_count,
+                self._training_parameters.morse.initial_training_top_n_selection_count,
             )
         )
 
@@ -86,13 +86,13 @@ class MorseTrainingManager(TrainingManager):
             train_results[index] = self.__logistic_regression_training.train(
                 index,
                 training_setup,
-                self.__correlation_to_target_feature,
-                self.__x_train,
-                self.__y_train,
-                self.__x_validation,
-                self.__y_validation,
-                self.__x_test,
-                self.__y_test,
+                self._pearson_correlation_to_target_feature,
+                self._x_train,
+                self._y_train,
+                self._x_validation,
+                self._y_validation,
+                self._x_test,
+                self._y_test,
             )
         return train_results
 
@@ -178,7 +178,6 @@ class MorseTrainingManager(TrainingManager):
                     training_setup_workspace[new_candidate_training_index] = (
                         training_setup
                     )
-                    self.__suggested_training_ids.append(new_candidate_training_index)
 
         print(f"Overall inspected training setups: {new_candidate_training_index}.")
         return final_top_n_training_results, all_training_results
@@ -194,7 +193,7 @@ class MorseTrainingManager(TrainingManager):
 
         # Skip if the generated feature set contains an excluded feature combination.
         skip: bool = False
-        for exclusion_tuple in self._training_parameters.excluded_feature_sets:
+        for exclusion_tuple in self._training_parameters.morse.excluded_feature_sets:
             if set(exclusion_tuple).issubset(set(new_training_setup.features)):
                 skip = True
 

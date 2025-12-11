@@ -20,7 +20,7 @@ class MutationCrossoverManager:
         for feature in self.__training_parameters.features:
             if (
                 random.uniform(0, 1)
-                <= self.__training_parameters.mutation_feature_change_probability
+                <= self.__training_parameters.morse.mutation_feature_change_probability
             ):
                 if feature in new_training_setup.features:
                     new_training_setup.features.remove(feature)
@@ -42,7 +42,7 @@ class MutationCrossoverManager:
         for feature in self.__training_parameters.features:
             if (
                 random.uniform(0, 1)
-                < self.__training_parameters.crossover_feature_selection_probability
+                < self.__training_parameters.morse.crossover_feature_selection_probability
             ):
                 if feature in training_setup_a.features:
                     new_training_setup.features.append(feature)

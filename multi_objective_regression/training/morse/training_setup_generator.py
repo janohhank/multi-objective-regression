@@ -15,7 +15,7 @@ class TrainingSetupGenerator(ABC):
         training_parameters: TrainingParameters,
     ) -> dict[int, TrainingSetup]:
         training_setups = {}
-        match training_parameters.initial_training_setup_generator_type:
+        match training_parameters.morse.initial_training_setup_generator_type:
             case "ALL_COMBINATIONS":
                 training_setups = (
                     TrainingSetupGenerator.__generate_all_feature_combinations(
@@ -55,9 +55,9 @@ class TrainingSetupGenerator(ABC):
 
         index: int = 1
         for combination in all_feature_combinations:
-            if len(training_parameters.excluded_feature_sets) > 0:
+            if len(training_parameters.morse.excluded_feature_sets) > 0:
                 skip: bool = False
-                for exclusion_tuple in training_parameters.excluded_feature_sets:
+                for exclusion_tuple in training_parameters.morse.excluded_feature_sets:
                     if set(exclusion_tuple).issubset(set(combination)):
                         skip = True
 
@@ -79,7 +79,10 @@ class TrainingSetupGenerator(ABC):
 
         index: int = 1
         used_combinations = set()
-        while len(training_setups) < training_parameters.initial_training_setup_count:
+        while (
+            len(training_setups)
+            < training_parameters.morse.initial_training_setup_count
+        ):
             size = random.choice(
                 range(
                     TrainingSetupGenerator.__MIN_NUMBER_OF_FEATURES,
@@ -92,7 +95,7 @@ class TrainingSetupGenerator(ABC):
                 used_combinations.add(combination)
 
                 skip: bool = False
-                for exclusion_tuple in training_parameters.excluded_feature_sets:
+                for exclusion_tuple in training_parameters.morse.excluded_feature_sets:
                     if set(exclusion_tuple).issubset(set(combination)):
                         skip = True
 
