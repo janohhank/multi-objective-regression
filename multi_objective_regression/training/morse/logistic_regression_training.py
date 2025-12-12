@@ -7,36 +7,37 @@ import numpy as np
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from imblearn.metrics import specificity_score
+from pandas import DataFrame
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    precision_score,
-    roc_auc_score,
-    recall_score,
-    f1_score,
-    average_precision_score,
+from training.objective_components import ObjectiveComponent
+from training.objective_components import (
+    create_objective_components,
 )
 from utils.training_utility import TrainingUtility
 
 
 class LogisticRegressionTraining:
     __training_parameters: TrainingParameters = None
+    __objective_components: list[ObjectiveComponent] = None
 
     def __init__(self, parameters: TrainingParameters):
         self.__training_parameters = parameters
+
+        self.__objective_components = create_objective_components(
+            self.__training_parameters.multi_objective_functions
+        )
 
     def train(
         self,
         index: int,
         training_setup: TrainingSetup,
-        correlation_to_target_feature,
-        x_train,
-        y_train,
-        x_validation,
-        y_validation,
-        x_test,
-        y_test,
+        pearson_correlation_to_target_feature: DataFrame,
+        x_train: DataFrame,
+        y_train: DataFrame,
+        x_validation: DataFrame,
+        y_validation: DataFrame,
+        x_test: DataFrame,
+        y_test: DataFrame,
     ) -> TrainingResult:
         start: float = time.perf_counter()
 
@@ -79,14 +80,14 @@ class LogisticRegressionTraining:
             int(log_regression.n_iter_[0]),
             self.evaluate(
                 training_setup,
-                correlation_to_target_feature,
+                pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
             self.evaluate(
                 training_setup,
-                correlation_to_target_feature,
+                pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_test,
                 y_test,
@@ -139,81 +140,15 @@ class LogisticRegressionTraining:
             coefficient_sign_diff_checks.values()
         ) / len(coefficient_sign_diff_checks)
 
-        # Accuracy
-        accuracy: float = accuracy_score(y_test, y_pred)
+        results: dict[str, float] = {}
+        multi_objective_score: float = 0.0
+        for objective_component in self.__objective_components:
+            score: float = objective_component.weighted_score(y_test, y_probs)
+            results[objective_component.NAME] = score
+            multi_objective_score += score
+        results["multi_objective_score"] = multi_objective_score
 
-        # Precision
-        precision: float = precision_score(y_test, y_pred)
-
-        # Recall
-        recall: float = recall_score(y_test, y_pred)
-
-        # Recall
-        specificity: float = specificity_score(y_test, y_pred)
-
-        # F1 score
-        f1_score_value: float = f1_score(y_test, y_pred)
-
-        # ROC-AUC
-        roc_auc: float = roc_auc_score(y_test, y_probs)
-
-        # PR-AUC
-        pr_auc: float = average_precision_score(y_test, y_probs)
-
-        # Gini
-        gini_score: float = 2 * roc_auc - 1
-
-        multi_objective_score: float = (
-            self.__training_parameters.multi_objective_function_weights[
-                "accuracy_weight"
-            ]
-            * accuracy
-            + self.__training_parameters.multi_objective_function_weights[
-                "precision_weight"
-            ]
-            * precision
-            + self.__training_parameters.multi_objective_function_weights[
-                "f1_score_weight"
-            ]
-            * f1_score_value
-            + self.__training_parameters.multi_objective_function_weights[
-                "recall_weight"
-            ]
-            * recall
-            + self.__training_parameters.multi_objective_function_weights[
-                "specificity_weight"
-            ]
-            * specificity
-            + self.__training_parameters.multi_objective_function_weights[
-                "roc_auc_weight"
-            ]
-            * roc_auc
-            + self.__training_parameters.multi_objective_function_weights[
-                "pr_auc_weight"
-            ]
-            * pr_auc
-            + self.__training_parameters.multi_objective_function_weights[
-                "gini_score_weight"
-            ]
-            * gini_score
-            + self.__training_parameters.multi_objective_function_weights[
-                "coefficient_sign_diff_score_weight"
-            ]
-            * coefficient_sign_diff_score
-        )
-
-        return {
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "specificity": specificity,
-            "f1_score": f1_score_value,
-            "roc_auc": roc_auc,
-            "pr_auc": pr_auc,
-            "gini_score": gini_score,
-            "coefficient_sign_diff_score": coefficient_sign_diff_score,
-            "multi_objective_score": multi_objective_score,
-        }
+        return results
 
     def suggest_training_setup_candidates(
         self, training_result: dict[int, TrainingResult]

@@ -21,7 +21,7 @@ class TrainingParameters:
     deap: DeapParameters = None
 
     # Pre-defined objective function weights
-    multi_objective_function_weights: typing.Optional[dict[str, float]] = None
+    multi_objective_functions: typing.Optional[dict[str, float]] = None
 
     target_feature: typing.Optional[str] = None
     features: typing.Optional[list[str]] = None
@@ -43,9 +43,9 @@ class TrainingParameters:
             deap=(DeapParameters.from_dict(**data["deap"]) if "deap" in data else {}),
             target_feature=data["target_feature"] if "target_feature" in data else None,
             features=data["features"] if "features" in data else [],
-            multi_objective_function_weights=(
-                data["multi_objective_function_weights"]
-                if "multi_objective_function_weights" in data
+            multi_objective_functions=(
+                data["multi_objective_functions"]
+                if "multi_objective_functions" in data
                 else {}
             ),
         )

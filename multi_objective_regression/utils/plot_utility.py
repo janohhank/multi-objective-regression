@@ -93,7 +93,7 @@ class PlotUtility(ABC):
             "f1_score",
             "roc_auc",
             "pr_auc",
-            "coefficient_sign_diff_score",
+            # "coefficient_sign_diff_score",
         ]
         data = {"Index": [], "Metric": [], "Value": []}
         for metric_name in metric_names:

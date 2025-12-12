@@ -18,7 +18,7 @@ class TrainingParameterUtility(ABC):
         )
 
         sum_of_weights: float = 0.0
-        for weight in training_parameters.multi_objective_function_weights.values():
+        for weight in training_parameters.multi_objective_functions.values():
             sum_of_weights += weight
         if not math.isclose(sum_of_weights, 1.0):
             raise ValueError(

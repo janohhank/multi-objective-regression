@@ -22,7 +22,7 @@ This module only adds new classes and does not modify existing project code.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Any, Iterable, Mapping, Union, Tuple
 
 import numpy as np
 from imblearn.metrics import specificity_score
@@ -50,6 +50,8 @@ class ObjectiveComponent(ABC):
         Optional non-negative weight applied when calling weighted_score.
         If None, weighted_score returns the raw score.
     """
+
+    NAME: str = None
 
     def __init__(self, weight: Optional[float] = None) -> None:
         if weight is not None and weight < 0:
@@ -100,6 +102,8 @@ class AccuracyComponent(ObjectiveComponent):
     Uses threshold to binarize y_probs before computing accuracy.
     """
 
+    NAME: str = "accuracy"
+
     def score(
         self,
         y_true: Sequence[int],
@@ -123,6 +127,8 @@ class PrecisionComponent(ObjectiveComponent):
     zero_division : int | float, default=0
         Value to return when there is a zero division (no positive predictions).
     """
+
+    NAME: str = "precision"
 
     def __init__(
         self,
@@ -149,6 +155,8 @@ class RecallComponent(ObjectiveComponent):
     Uses threshold to binarize y_probs before computing recall.
     """
 
+    NAME: str = "recall"
+
     def score(
         self,
         y_true: Sequence[int],
@@ -171,6 +179,8 @@ class SpecificityComponent(ObjectiveComponent):
     - If denominator TN+FP == 0 -> returns 0.0
     """
 
+    NAME: str = "specificity"
+
     def score(
         self,
         y_true: Sequence[int],
@@ -187,6 +197,8 @@ class F1ScoreComponent(ObjectiveComponent):
 
     Uses threshold to binarize y_probs before computing F1 score.
     """
+
+    NAME: str = "f1_score"
 
     def __init__(
         self,
@@ -214,6 +226,8 @@ class RocAucComponent(ObjectiveComponent):
     The 'threshold' parameter is accepted for API consistency but ignored.
     """
 
+    NAME: str = "roc_auc"
+
     def score(
         self,
         y_true: Sequence[int],
@@ -230,6 +244,8 @@ class PrAucComponent(ObjectiveComponent):
     Uses y_probs directly as probabilities/scores for the positive class.
     The 'threshold' parameter is accepted for API consistency but ignored.
     """
+
+    NAME: str = "pr_auc"
 
     def score(
         self,
@@ -249,6 +265,8 @@ class GiniComponent(ObjectiveComponent):
     The 'threshold' parameter is accepted for API consistency but ignored.
     """
 
+    NAME: str = "gini"
+
     def score(
         self,
         y_true: Sequence[int],
@@ -257,6 +275,104 @@ class GiniComponent(ObjectiveComponent):
     ) -> float:
         auc = float(roc_auc_score(y_true, y_probs))
         return 2.0 * auc - 1.0
+
+
+# Map name aliases to component classes
+_COMPONENT_ALIASES: dict[str, type[ObjectiveComponent]] = {
+    # Accuracy
+    AccuracyComponent.NAME: AccuracyComponent,
+    # Precision
+    PrecisionComponent.NAME: PrecisionComponent,
+    # Recall (Sensitivity / TPR)
+    RecallComponent.NAME: RecallComponent,
+    # Specificity (TNR)
+    SpecificityComponent.NAME: SpecificityComponent,
+    # F1
+    F1ScoreComponent.NAME: F1ScoreComponent,
+    # ROC AUC
+    RocAucComponent.NAME: RocAucComponent,
+    # PR AUC (Average Precision)
+    PrAucComponent.NAME: PrAucComponent,
+    # Gini
+    GiniComponent.NAME: GiniComponent,
+}
+
+
+# Extra __init__ kwargs supported per component class
+_ALLOWED_INIT_KWARGS: dict[type[ObjectiveComponent], set[str]] = {
+    PrecisionComponent: {"zero_division"},
+    F1ScoreComponent: {"zero_division"},
+}
+
+
+def create_objective_component(
+    name: str,
+    weight: Optional[float] = None,
+    **kwargs: Any,
+) -> ObjectiveComponent:
+    """
+    Factory: create a single objective component by name.
+
+    Parameters
+    ----------
+    name : str
+        Case-insensitive name or alias, e.g.:
+        "accuracy", "precision", "recall", "specificity",
+        "f1_score", "roc_auc", "pr_auc", "gini"
+    weight : Optional[float]
+        Optional non-negative weight applied in weighted_score(...).
+    **kwargs : Any
+        Extra constructor kwargs supported by some components:
+          - PrecisionComponent: zero_division
+          - F1ScoreComponent: zero_division
+
+    Returns
+    -------
+    ObjectiveComponent
+
+    Raises
+    ------
+    ValueError
+        If the name is unknown.
+    """
+    cls = _COMPONENT_ALIASES.get(name)
+    if cls is None:
+        available = ", ".join(sorted(set(_COMPONENT_ALIASES.keys())))
+        raise ValueError(
+            f"Unknown objective component '{name}'. Available names: {available}"
+        )
+
+    allowed = _ALLOWED_INIT_KWARGS.get(cls, set())
+    filtered_kwargs = {k: v for k, v in kwargs.items() if k in allowed}
+
+    return cls(weight=weight, **filtered_kwargs)  # type: ignore[arg-type]
+
+
+def create_objective_components(
+    specs: Union[Mapping[str, float], Iterable[Tuple[str, float]]],
+    default_kwargs: Optional[dict[str, Any]] = None,
+) -> list[ObjectiveComponent]:
+    """
+    Build multiple components from a name->weight mapping or (name, weight) pairs.
+
+    Examples
+    --------
+    create_objective_components({"precision": 0.4, "recall": 0.6})
+    create_objective_components([("accuracy", 1.0), ("roc_auc", 0.5)],
+                                default_kwargs={"zero_division": 0})
+    """
+    components: list[ObjectiveComponent] = []
+    if isinstance(specs, Mapping):
+        items = specs.items()
+    else:
+        items = list(specs)
+
+    for name, weight in items:  # type: ignore[misc]
+        kwargs = dict(default_kwargs) if default_kwargs else {}
+        comp = create_objective_component(name, weight=weight, **kwargs)
+        components.append(comp)
+
+    return components
 
 
 __all__ = [
@@ -269,4 +385,6 @@ __all__ = [
     "RocAucComponent",
     "PrAucComponent",
     "GiniComponent",
+    "create_objective_component",
+    "create_objective_components",
 ]
