@@ -7,7 +7,7 @@ import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
 
-from dto.morse_training_results import TrainingResult
+from dto.training_result import TrainingResult
 from training.objective_components import (
     AccuracyComponent,
     PrecisionComponent,
@@ -53,15 +53,15 @@ class MultiObjectivePredictorApplication:
         )
         test_dataset: DataFrame = pandas.read_csv(self.__TEST_DATASET_PATH)
         x_test_reduced: Series = test_dataset[
-            training_result.training_setup["features"]
+            training_result.training_setup.features
         ].copy()
         x_test_scaled: ndarray = scaler.transform(x_test_reduced)
         y_test: DataFrame = test_dataset[
-            training_result.training_setup["target_feature"]
+            training_result.training_setup.target_feature
         ].copy()
 
         print("Predicting on the test set.")
-        y_probs = model.predict_proba(x_test_scaled)[:, 1]
+        y_probs: ndarray = model.predict_proba(x_test_scaled)[:, 1]
 
         print(f"Calculating results with threshold {self.__THRESHOLD}.")
         print(
