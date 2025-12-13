@@ -7,6 +7,7 @@ from pandas import DataFrame
 
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
+from dto.training_results import TrainingResults
 from training.deap.deap_training_manager import (
     DeapTrainingManager,
 )
@@ -35,6 +36,9 @@ class MultiObjectiveTrainingApplication:
         )
 
     def start(self):
+        training_results: TrainingResults = TrainingResults(
+            self.__training_parameters, {}
+        )
         for algorithm in self.__training_parameters.algorithms:
             if algorithm == "MORSE":
                 training_manager = MorseTrainingManager(self.__training_parameters)
@@ -43,9 +47,11 @@ class MultiObjectiveTrainingApplication:
             else:
                 print(f"[ERROR] Unknown algorithm type: {algorithm.name}")
                 continue
-            self.__start_training(training_manager)
+            training_results.results[algorithm] = self.__start_training(
+                training_manager
+            )
 
-    def __start_training(self, training_manager: TrainingManager):
+    def __start_training(self, training_manager: TrainingManager) -> TrainingResult:
         print("Start training.")
         start: float = time.perf_counter()
 
@@ -115,6 +121,8 @@ class MultiObjectiveTrainingApplication:
 
         elapsed: float = time.perf_counter() - start
         print(f"Finished training on {elapsed:.2f} seconds.")
+
+        return best_model
 
 
 def main():

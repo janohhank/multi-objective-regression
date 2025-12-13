@@ -4,17 +4,17 @@ from dataclasses import dataclass
 
 @dataclass
 class MorseParameters:
-    excluded_feature_sets: typing.Optional[list[list[str]]] = None
-    initial_training_setup_generator_type: typing.Optional[str] = None
-    initial_training_setup_count: typing.Optional[int] = None
-    initial_training_top_n_selection_count: typing.Optional[int] = None
-    mutation_and_crossover_iteration: typing.Optional[int] = None
-    mutation_and_crossover_balance: typing.Optional[float] = None
-    mutation_feature_change_probability: typing.Optional[float] = None
-    crossover_feature_selection_probability: typing.Optional[float] = None
+    excluded_feature_sets: typing.Optional[list[list[str]]]
+    initial_training_setup_generator_type: typing.Optional[str]
+    initial_training_setup_count: typing.Optional[int]
+    initial_training_top_n_selection_count: typing.Optional[int]
+    mutation_and_crossover_iteration: typing.Optional[int]
+    mutation_and_crossover_balance: typing.Optional[float]
+    mutation_feature_change_probability: typing.Optional[float]
+    crossover_feature_selection_probability: typing.Optional[float]
 
     @staticmethod
-    def from_dict(**data: str) -> "MorseParameters":
+    def from_dict(**data: dict) -> "MorseParameters":
         return MorseParameters(
             excluded_feature_sets=(
                 data["excluded_feature_sets"] if "excluded_feature_sets" in data else []

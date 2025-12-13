@@ -4,6 +4,7 @@ import typing
 from copy import deepcopy
 
 import numpy as np
+from dto.morse_training_results import MorseTrainingResults
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
@@ -16,7 +17,7 @@ from training.objective_components import (
 from utils.training_utility import TrainingUtility
 
 
-class LogisticRegressionTraining:
+class MorseLogisticRegressionTraining:
     __training_parameters: TrainingParameters = None
     __objective_components: list[ObjectiveComponent] = None
 
@@ -70,40 +71,41 @@ class LogisticRegressionTraining:
             zip(training_setup.features, log_regression.coef_[0])
         )
 
-        elapsed: float = time.perf_counter() - start
+        elapsed_sec: float = time.perf_counter() - start
 
-        return TrainingResult(
-            index,
-            training_setup,
-            coefficients,
-            float(log_regression.intercept_[0]),
-            int(log_regression.n_iter_[0]),
-            self.evaluate(
+        return MorseTrainingResults(
+            training_setup=training_setup,
+            validation_results=self.evaluate(
                 training_setup,
                 pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
-            self.evaluate(
+            test_results=self.evaluate(
                 training_setup,
                 pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_test,
                 y_test,
             ),
-            elapsed,
-            deepcopy(log_regression),
-            deepcopy(scaler),
+            training_time_seconds=elapsed_sec,
+            model=deepcopy(log_regression),
+            scaler=deepcopy(scaler),
+            # MORSE results fields
+            index=index,
+            coefficients=coefficients,
+            interception=float(log_regression.intercept_[0]),
+            iteration=int(log_regression.n_iter_[0]),
         )
 
     def evaluate(
         self,
         training_setup: TrainingSetup,
-        correlation_to_target_feature,
-        log_regression,
-        x_test,
-        y_test,
+        correlation_to_target_feature: DataFrame,
+        log_regression: LogisticRegression,
+        x_test: DataFrame,
+        y_test: DataFrame,
     ):
         y_pred: typing.Any = log_regression.predict(x_test)
         y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]

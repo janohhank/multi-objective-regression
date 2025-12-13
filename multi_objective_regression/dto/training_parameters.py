@@ -9,22 +9,23 @@ from orjson import orjson
 @dataclass
 class TrainingParameters:
     # Dataset properties
-    train_dataset: typing.Optional[str] = None
+    train_dataset: typing.Optional[str]
     # Optional, calculated from train_dataset
-    validation_dataset: typing.Optional[str] = None
+    validation_dataset: typing.Optional[str]
     # Optional, calculated from train_dataset
-    test_dataset: typing.Optional[str] = None
+    test_dataset: typing.Optional[str]
 
-    # Meta-optimization algorithms and parameters
-    algorithms: typing.Optional[list[str]] = None
-    morse: MorseParameters = None
-    deap: DeapParameters = None
+    # Selected meta-optimization algorithm(s) and those parameters
+    algorithms: typing.Optional[list[str]]
+    morse: MorseParameters
+    deap: DeapParameters
 
     # Pre-defined objective function weights
-    multi_objective_functions: typing.Optional[dict[str, float]] = None
+    multi_objective_functions: typing.Optional[dict[str, float]]
 
-    target_feature: typing.Optional[str] = None
-    features: typing.Optional[list[str]] = None
+    # Feature names
+    target_feature: typing.Optional[str]
+    features: typing.Optional[list[str]]
 
     @staticmethod
     def from_json(json_str: str) -> "TrainingParameters":

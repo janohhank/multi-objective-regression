@@ -5,7 +5,9 @@ from copy import deepcopy
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from training.morse.logistic_regression_training import LogisticRegressionTraining
+from training.morse.morese_logistic_regression_training import (
+    MorseLogisticRegressionTraining,
+)
 from training.morse.mutation_crossover_manager import MutationCrossoverManager
 from training.morse.training_setup_generator import TrainingSetupGenerator
 from training.training_manager import TrainingManager
@@ -18,7 +20,7 @@ from utils.training_result_utility import (
 
 class MorseTrainingManager(TrainingManager):
     # MORSE supervised machine learning trainer
-    __logistic_regression_training: LogisticRegressionTraining = None
+    __logistic_regression_training: MorseLogisticRegressionTraining = None
     # MORSE meta-optimization mutation and crossover helper
     __mutation_crossover_manager: MutationCrossoverManager = None
 

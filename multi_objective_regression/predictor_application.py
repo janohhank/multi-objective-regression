@@ -7,7 +7,7 @@ import pandas
 from numpy import ndarray
 from pandas import DataFrame, Series
 
-from dto.training_result import TrainingResult
+from dto.morse_training_results import TrainingResult
 from training.objective_components import (
     AccuracyComponent,
     PrecisionComponent,

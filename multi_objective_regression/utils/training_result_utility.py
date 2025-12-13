@@ -9,7 +9,7 @@ from dto.training_result import TrainingResult
 class TrainingResultUtility(ABC):
 
     @staticmethod
-    def get_best_training_result(
+    def get_best_training_result_on_validation_set(
         training_results: dict[int, TrainingResult],
     ) -> TrainingResult:
         return sorted(
@@ -19,7 +19,7 @@ class TrainingResultUtility(ABC):
         )[0][1]
 
     @staticmethod
-    def get_top_n_training_results(
+    def get_top_n_training_results_on_validation_set(
         training_results: dict[int, TrainingResult], n: int
     ) -> dict[int, TrainingResult]:
         return dict(
@@ -117,6 +117,7 @@ class TrainingResultUtility(ABC):
             os.path.join(training_datetime, folder, "scaler.pkl"),
         )
 
+    # TBD check this
     @staticmethod
     def save_training_results_report(
         training_datetime: str,

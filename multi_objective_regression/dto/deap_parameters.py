@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 @dataclass
 class DeapParameters:
-    iteration: typing.Optional[int] = None
+    iteration: typing.Optional[int]
 
     @staticmethod
-    def from_dict(**data: str) -> "DeapParameters":
+    def from_dict(**data: dict) -> "DeapParameters":
         return DeapParameters(
             iteration=(data["iteration"] if "iteration" in data else None),
         )
