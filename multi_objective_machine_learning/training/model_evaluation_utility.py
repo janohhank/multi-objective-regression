@@ -1,9 +1,8 @@
-import math
 from abc import ABC
+from typing import Any
 
 import numpy as np
-from pandas import Series, DataFrame
-from sklearn.linear_model import LogisticRegression
+from pandas import DataFrame
 from training.objective_components import (
     ObjectiveComponent,
 )
@@ -14,38 +13,18 @@ class ModelEvaluationUtility(ABC):
     @staticmethod
     def evaluate_log_regression(
         objective_components: list[ObjectiveComponent],
-        selected_features: list[str],
-        correlation_to_target_feature: Series,
-        log_regression: LogisticRegression,
+        model: Any,
         x: DataFrame,
         y_true: DataFrame,
     ):
-        y_pred: np.ndarray = log_regression.predict(x)
-        y_probs: np.ndarray = log_regression.predict_proba(x)[:, 1]
+        y_pred: np.ndarray = model.predict(x)
+        y_probs: np.ndarray = model.predict_proba(x)[:, 1]
 
         results: dict[str, float] = {}
         if len(np.unique(y_pred)) != len(np.unique(y_true)):
             for objective_component in objective_components:
                 results[objective_component.NAME] = 0.0
             return results
-
-        # Coefficients sign diff penalty calculation
-        coefficients: dict[str, float] = dict(
-            zip(selected_features, log_regression.coef_[0])
-        )
-
-        coefficient_sign_diff_checks: dict[str, bool] = {}
-        for feature, coefficient in coefficients.items():
-            if math.isnan(correlation_to_target_feature[feature]):
-                coefficient_sign_diff_checks[feature] = True
-            else:
-                check: float = correlation_to_target_feature[feature] * coefficient
-                coefficient_sign_diff_checks[feature] = (
-                    math.isclose(check, 0.0) or check < 0.0
-                )
-        coefficient_sign_diff_score: float = 1.0 - sum(
-            coefficient_sign_diff_checks.values()
-        ) / len(coefficient_sign_diff_checks)
 
         multi_objective_score: float = 0.0
         for objective_component in objective_components:

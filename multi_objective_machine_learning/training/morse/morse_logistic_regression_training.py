@@ -15,20 +15,25 @@ from training.objective_components import ObjectiveComponent
 from training.objective_components import (
     create_objective_components,
 )
+from training.objective_components import create_objective_components_dictionary
 from utils.training_utility import TrainingUtility
 
 
 class MorseLogisticRegressionTraining:
     __training_parameters: TrainingParameters = None
-    __objective_components: list[ObjectiveComponent] = None
+    __objective_components: dict[str, ObjectiveComponent] = None
+    __coefficient_sign_diff_component: ObjectiveComponent = None
 
     def __init__(self, parameters: TrainingParameters):
         self.__training_parameters = parameters
 
-        self.__objective_components: list[ObjectiveComponent] = (
-            create_objective_components(
+        self.__objective_components: dict[str, ObjectiveComponent] = (
+            create_objective_components_dictionary(
                 self.__training_parameters.multi_objective_functions
             )
+        )
+        self.__coefficient_sign_diff_component: ObjectiveComponent = (
+            self.__objective_components["coefficient_sign_diff"]
         )
 
     def train(
@@ -74,22 +79,23 @@ class MorseLogisticRegressionTraining:
             zip(training_setup.features, log_regression.coef_[0])
         )
 
+        if self.__coefficient_sign_diff_component is not None:
+            self.__coefficient_sign_diff_component.update_context(
+                coefficients, pearson_correlation_to_target_feature
+            )
+
         elapsed_sec: float = time.perf_counter() - start
 
         return MorseTrainingResults(
             training_setup=training_setup,
             validation_results=ModelEvaluationUtility.evaluate_log_regression(
-                self.__objective_components,
-                training_setup.features,
-                pearson_correlation_to_target_feature,
+                self.__objective_components.values(),
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
             test_results=ModelEvaluationUtility.evaluate_log_regression(
-                self.__objective_components,
-                training_setup.features,
-                pearson_correlation_to_target_feature,
+                self.__objective_components.values(),
                 log_regression,
                 scaled_x_test,
                 y_test,

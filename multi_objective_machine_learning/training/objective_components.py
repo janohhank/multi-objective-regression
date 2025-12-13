@@ -21,11 +21,13 @@ This module only adds new classes and does not modify existing project code.
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from typing import Optional, Sequence, Any, Iterable, Mapping, Union, Tuple
 
 import numpy as np
 from imblearn.metrics import specificity_score
+from pandas import Series
 from sklearn.metrics import (
     accuracy_score,
     precision_score,
@@ -277,6 +279,66 @@ class GiniComponent(ObjectiveComponent):
         return 2.0 * auc - 1.0
 
 
+class CoefficientSignDiffComponent(ObjectiveComponent):
+    """
+    Coefficient sign difference component.
+
+    Computes a score in [0, 1] that penalizes features whose learned coefficient
+    sign disagrees with the sign of their correlation to the target.
+
+    The score is defined as:
+        1 - (# of penalized features) / (# of evaluated features)
+
+    A feature is penalized if:
+      - its correlation to target is missing/NaN, or
+      - the product correlation * coefficient is negative, or approximately 0
+        within abs tolerance 'zero_tol'.
+
+    This component ignores y_true/y_probs; they're accepted for API consistency.
+    """
+
+    NAME: str = "coefficient_sign_diff"
+
+    __coefficients: dict[str, float]
+    __pearson_correlation_to_target_feature: Series
+
+    def update_context(
+        self,
+        coefficients: dict[str, float],
+        pearson_correlation_to_target_feature: Series,
+    ) -> None:
+        """
+        Update or provide context needed for scoring at runtime.
+        """
+        self.__coefficients = coefficients
+        self.__pearson_correlation_to_target_feature = (
+            pearson_correlation_to_target_feature
+        )
+
+    def score(
+        self,
+        y_true: Sequence[int],
+        y_probs: Sequence[float],
+        threshold: float = 0.5,
+    ) -> float:
+        coefficient_sign_diff_checks: dict[str, bool] = {}
+        for feature, coefficient in self.__coefficients.items():
+            if math.isnan(self.__pearson_correlation_to_target_feature[feature]):
+                coefficient_sign_diff_checks[feature] = True
+            else:
+                check: float = (
+                    self.__pearson_correlation_to_target_feature[feature] * coefficient
+                )
+                coefficient_sign_diff_checks[feature] = (
+                    math.isclose(check, 0.0) or check < 0.0
+                )
+        coefficient_sign_diff_score: float = 1.0 - sum(
+            coefficient_sign_diff_checks.values()
+        ) / len(coefficient_sign_diff_checks)
+
+        return coefficient_sign_diff_score
+
+
 # Map name aliases to component classes
 _COMPONENT_ALIASES: dict[str, type[ObjectiveComponent]] = {
     # Accuracy
@@ -295,6 +357,8 @@ _COMPONENT_ALIASES: dict[str, type[ObjectiveComponent]] = {
     PrAucComponent.NAME: PrAucComponent,
     # Gini
     GiniComponent.NAME: GiniComponent,
+    # Coefficient sign difference
+    CoefficientSignDiffComponent.NAME: CoefficientSignDiffComponent,
 }
 
 
@@ -375,6 +439,33 @@ def create_objective_components(
     return components
 
 
+def create_objective_components_dictionary(
+    specs: Union[Mapping[str, float], Iterable[Tuple[str, float]]],
+    default_kwargs: Optional[dict[str, Any]] = None,
+) -> dict[str, ObjectiveComponent]:
+    """
+    Build multiple components from a name->weight mapping or (name, weight) pairs and return a dictionary.
+
+    Examples
+    --------
+    create_objective_components_dictionary({"precision": 0.4, "recall": 0.6})
+    create_objective_components_dictionary([("accuracy", 1.0), ("roc_auc", 0.5)],
+                                           default_kwargs={"zero_division": 0})
+    """
+    components: dict[str, ObjectiveComponent] = {}
+    if isinstance(specs, Mapping):
+        items = specs.items()
+    else:
+        items = list(specs)
+
+    for name, weight in items:  # type: ignore[misc]
+        kwargs = dict(default_kwargs) if default_kwargs else {}
+        comp = create_objective_component(name, weight=weight, **kwargs)
+        components[name] = comp
+
+    return components
+
+
 __all__ = [
     "ObjectiveComponent",
     "AccuracyComponent",
@@ -385,6 +476,7 @@ __all__ = [
     "RocAucComponent",
     "PrAucComponent",
     "GiniComponent",
+    "CoefficientSignDiffComponent",
     "create_objective_component",
     "create_objective_components",
 ]

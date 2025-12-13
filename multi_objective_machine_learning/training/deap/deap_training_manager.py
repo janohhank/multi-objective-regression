@@ -13,12 +13,14 @@ from training.model_evaluation_utility import (
 )
 from training.objective_components import ObjectiveComponent
 from training.objective_components import create_objective_components
+from training.objective_components import create_objective_components_dictionary
 from training.training_manager import TrainingManager
 from utils.training_utility import TrainingUtility
 
 
 class DeapTrainingManager(TrainingManager):
-    __objective_components: list[ObjectiveComponent] = None
+    __objective_components: dict[str, ObjectiveComponent] = None
+    __coefficient_sign_diff_component: ObjectiveComponent = None
 
     def __init__(
         self,
@@ -28,10 +30,13 @@ class DeapTrainingManager(TrainingManager):
 
         self.TYPE = "DEAP"
 
-        self.__objective_components: list[ObjectiveComponent] = (
-            create_objective_components(
+        self.__objective_components: dict[str, ObjectiveComponent] = (
+            create_objective_components_dictionary(
                 self._training_parameters.multi_objective_functions
             )
+        )
+        self.__coefficient_sign_diff_component: ObjectiveComponent = (
+            self.__objective_components["coefficient_sign_diff"]
         )
 
     def __evaluate(self, individual):
@@ -64,8 +69,16 @@ class DeapTrainingManager(TrainingManager):
         log_regression.fit(scaled_x_train, self._y_train)
         y_probs: np.ndarray = log_regression.predict_proba(scaled_x_validation)[:, 1]
 
+        coefficients: dict[str, float] = dict(
+            zip(selected_cols, log_regression.coef_[0])
+        )
+        if self.__coefficient_sign_diff_component is not None:
+            self.__coefficient_sign_diff_component.update_context(
+                coefficients, self._pearson_correlation_to_target_feature
+            )
+
         fitness_values: list[float] = []
-        for objective_component in self.__objective_components:
+        for objective_component in self.__objective_components.values():
             if objective_component.weight == 0.0:
                 continue
 
@@ -79,7 +92,7 @@ class DeapTrainingManager(TrainingManager):
         n_features: int = len(feature_names)
 
         fitness_weights: list[float] = []
-        for objective_component in self.__objective_components:
+        for objective_component in self.__objective_components.values():
             if objective_component.weight == 0.0:
                 continue
             fitness_weights.append(objective_component.weight)
@@ -176,6 +189,11 @@ class DeapTrainingManager(TrainingManager):
             zip(selected_features, log_regression.coef_[0])
         )
 
+        if self.__coefficient_sign_diff_component is not None:
+            self.__coefficient_sign_diff_component.update_context(
+                coefficients, self._pearson_correlation_to_target_feature
+            )
+
         elapsed_sec: float = time.perf_counter() - start
 
         training_result = DeapTrainingResults(
@@ -186,17 +204,13 @@ class DeapTrainingManager(TrainingManager):
                 target_feature=self._training_parameters.target_feature,
             ),
             validation_results=ModelEvaluationUtility.evaluate_log_regression(
-                self.__objective_components,
-                selected_features,
-                self._pearson_correlation_to_target_feature,
+                self.__objective_components.values(),
                 log_regression,
                 scaled_x_validation,
                 self._y_validation,
             ),
             test_results=ModelEvaluationUtility.evaluate_log_regression(
-                self.__objective_components,
-                selected_features,
-                self._pearson_correlation_to_target_feature,
+                self.__objective_components.values(),
                 log_regression,
                 scaled_x_test,
                 self._y_test,
