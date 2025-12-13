@@ -71,8 +71,10 @@ class MultiObjectiveTrainingApplication:
         )
 
         print("Saving the best model.")
-        best_model: TrainingResult = TrainingResultUtility.get_best_training_result(
-            top_training_results
+        best_model: TrainingResult = (
+            TrainingResultUtility.get_best_training_result_on_validation_set(
+                top_training_results
+            )
         )
         TrainingResultUtility.save_model(
             result_directory,

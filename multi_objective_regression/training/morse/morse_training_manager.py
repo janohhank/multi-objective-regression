@@ -31,8 +31,8 @@ class MorseTrainingManager(TrainingManager):
         super().__init__(training_parameters)
 
         self.TYPE = "MORSE"
-        self.__logistic_regression_training: LogisticRegressionTraining = (
-            LogisticRegressionTraining(self._training_parameters)
+        self.__logistic_regression_training: MorseLogisticRegressionTraining = (
+            MorseLogisticRegressionTraining(self._training_parameters)
         )
         self.__mutation_crossover_manager: MutationCrossoverManager = (
             MutationCrossoverManager(self._training_parameters)
@@ -51,7 +51,7 @@ class MorseTrainingManager(TrainingManager):
             training_setups
         )
         top_initial_training_results: dict[int, TrainingResult] = (
-            TrainingResultUtility.get_top_n_training_results(
+            TrainingResultUtility.get_top_n_training_results_on_validation_set(
                 training_results,
                 self._training_parameters.morse.initial_training_top_n_selection_count,
             )
