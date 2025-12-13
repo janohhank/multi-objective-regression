@@ -2,13 +2,15 @@ import math
 import time
 from copy import deepcopy
 
-import numpy as np
 from dto.morse_training_results import MorseTrainingResults
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
 from pandas import DataFrame, Series
 from sklearn.linear_model import LogisticRegression
+from training.model_evaluation_utility import (
+    ModelEvaluationUtility,
+)
 from training.objective_components import ObjectiveComponent
 from training.objective_components import (
     create_objective_components,
@@ -76,15 +78,17 @@ class MorseLogisticRegressionTraining:
 
         return MorseTrainingResults(
             training_setup=training_setup,
-            validation_results=self.evaluate(
-                training_setup,
+            validation_results=ModelEvaluationUtility.evaluate_log_regression(
+                self.__objective_components,
+                training_setup.features,
                 pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
-            test_results=self.evaluate(
-                training_setup,
+            test_results=ModelEvaluationUtility.evaluate_log_regression(
+                self.__objective_components,
+                training_setup.features,
                 pearson_correlation_to_target_feature,
                 log_regression,
                 scaled_x_test,
@@ -99,59 +103,6 @@ class MorseLogisticRegressionTraining:
             interception=float(log_regression.intercept_[0]),
             iteration=int(log_regression.n_iter_[0]),
         )
-
-    def evaluate(
-        self,
-        training_setup: TrainingSetup,
-        correlation_to_target_feature: DataFrame,
-        log_regression: LogisticRegression,
-        x_test: DataFrame,
-        y_test: DataFrame,
-    ):
-        y_pred: np.ndarray = log_regression.predict(x_test)
-        y_probs: np.ndarray = log_regression.predict_proba(x_test)[:, 1]
-
-        if len(np.unique(y_pred)) != len(np.unique(y_test)):
-            return {
-                "accuracy": 0.0,
-                "precision": 0.0,
-                "recall": 0.0,
-                "specificity": 0.0,
-                "f1_score": 0.0,
-                "roc_auc": 0.0,
-                "pr_auc": 0.0,
-                "gini_score": 0.0,
-                "coefficient_sign_diff_score": 0.0,
-                "multi_objective_score": 0.0,
-            }
-
-        # Coefficients sign diff penalty calculation
-        coefficients: dict[str, float] = dict(
-            zip(training_setup.features, log_regression.coef_[0])
-        )
-
-        coefficient_sign_diff_checks: dict[str, bool] = {}
-        for feature, coefficient in coefficients.items():
-            if math.isnan(correlation_to_target_feature[feature]):
-                coefficient_sign_diff_checks[feature] = True
-            else:
-                check: float = correlation_to_target_feature[feature] * coefficient
-                coefficient_sign_diff_checks[feature] = (
-                    math.isclose(check, 0.0) or check < 0.0
-                )
-        coefficient_sign_diff_score: float = 1.0 - sum(
-            coefficient_sign_diff_checks.values()
-        ) / len(coefficient_sign_diff_checks)
-
-        results: dict[str, float] = {}
-        multi_objective_score: float = 0.0
-        for objective_component in self.__objective_components:
-            score: float = objective_component.weighted_score(y_test, y_probs)
-            results[objective_component.NAME] = score
-            multi_objective_score += score
-        results["multi_objective_score"] = multi_objective_score
-
-        return results
 
     def suggest_training_setup_candidates(
         self, training_result: dict[int, TrainingResult]
