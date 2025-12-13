@@ -4,6 +4,7 @@ from abc import ABC
 
 import joblib
 from dto.training_result import TrainingResult
+from dto.training_results import TrainingResults
 
 
 class TrainingResultUtility(ABC):
@@ -81,6 +82,25 @@ class TrainingResultUtility(ABC):
                         default=str,
                     )
                 )
+
+    @staticmethod
+    def save_complete_training_results(
+        training_datetime: str, training_results: TrainingResults
+    ) -> None:
+        with open(
+            os.path.join(
+                training_datetime,
+                "overall_results.json",
+            ),
+            "w",
+        ) as file:
+            file.write(
+                json.dumps(
+                    training_results.to_dict(),
+                    indent=4,
+                    default=str,
+                )
+            )
 
     @staticmethod
     def save_model(

@@ -1,6 +1,5 @@
 import math
 import time
-import typing
 from copy import deepcopy
 
 import numpy as np
@@ -107,8 +106,8 @@ class MorseLogisticRegressionTraining:
         x_test: DataFrame,
         y_test: DataFrame,
     ):
-        y_pred: typing.Any = log_regression.predict(x_test)
-        y_probs: typing.Any = log_regression.predict_proba(x_test)[:, 1]
+        y_pred: np.ndarray = log_regression.predict(x_test)
+        y_probs: np.ndarray = log_regression.predict_proba(x_test)[:, 1]
 
         if len(np.unique(y_pred)) != len(np.unique(y_test)):
             return {

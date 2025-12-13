@@ -36,6 +36,10 @@ class MultiObjectiveTrainingApplication:
         )
 
     def start(self):
+        # Main result directory is the date time
+        main_result_directory: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+        os.makedirs(main_result_directory)
+
         training_results: TrainingResults = TrainingResults(
             self.__training_parameters, {}
         )
@@ -48,15 +52,18 @@ class MultiObjectiveTrainingApplication:
                 print(f"[ERROR] Unknown algorithm type: {algorithm}")
                 continue
             training_results.results[algorithm] = self.__start_training(
-                training_manager
+                main_result_directory, training_manager
             )
+        TrainingResultUtility.save_complete_training_results(
+            main_result_directory, training_results
+        )
 
-    def __start_training(self, training_manager: TrainingManager) -> TrainingResult:
+    def __start_training(
+        self, main_result_directory: str, training_manager: TrainingManager
+    ) -> TrainingResult:
         print("Start training.")
         start: float = time.perf_counter()
 
-        # Main result directory is the date time
-        main_result_directory: str = datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         result_directory: str = os.path.join(
             main_result_directory, training_manager.TYPE
         )

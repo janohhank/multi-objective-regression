@@ -77,9 +77,9 @@ class MultiObjectivePredictorApplication:
         print(
             f"F1 score: {F1ScoreComponent().score(y_test, y_probs, self.__THRESHOLD)}"
         )
-        print(f"ROC-AUC: {RocAucComponent().score(y_test, y_probs, self.__THRESHOLD)}")
-        print(f"PR-AUC: {PrAucComponent().score(y_test, y_probs, self.__THRESHOLD)}")
-        print(f"Gini score: {GiniComponent().score(y_test, y_probs, self.__THRESHOLD)}")
+        print(f"ROC-AUC: {RocAucComponent().score(y_test, y_probs)}")
+        print(f"PR-AUC: {PrAucComponent().score(y_test, y_probs)}")
+        print(f"Gini score: {GiniComponent().score(y_test, y_probs)}")
 
 
 def main() -> None:
