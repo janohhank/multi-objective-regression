@@ -15,7 +15,7 @@
     "Age",
     "ln_age"
   ],
-  "algorithms": ["MORSE"],
+  "algorithms": ["MORSE","DEAP"],
   "morse": {
     "excluded_feature_sets": [
       [
@@ -44,7 +44,8 @@
     "crossover_feature_selection_probability": 0.5
   },
   "deap": {
-    "iteration": 48
+    "initial_population_size": 48,
+    "iteration": 5
   },
   "multi_objective_functions": {
     "accuracy": 0.0,
