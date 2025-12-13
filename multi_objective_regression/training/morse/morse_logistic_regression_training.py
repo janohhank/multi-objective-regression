@@ -23,8 +23,10 @@ class MorseLogisticRegressionTraining:
     def __init__(self, parameters: TrainingParameters):
         self.__training_parameters = parameters
 
-        self.__objective_components = create_objective_components(
-            self.__training_parameters.multi_objective_functions
+        self.__objective_components: list[ObjectiveComponent] = (
+            create_objective_components(
+                self.__training_parameters.multi_objective_functions
+            )
         )
 
     def train(

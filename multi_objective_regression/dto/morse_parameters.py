@@ -1,17 +1,16 @@
-import typing
 from dataclasses import dataclass
 
 
 @dataclass
 class MorseParameters:
-    excluded_feature_sets: typing.Optional[list[list[str]]]
-    initial_training_setup_generator_type: typing.Optional[str]
-    initial_training_setup_count: typing.Optional[int]
-    initial_training_top_n_selection_count: typing.Optional[int]
-    mutation_and_crossover_iteration: typing.Optional[int]
-    mutation_and_crossover_balance: typing.Optional[float]
-    mutation_feature_change_probability: typing.Optional[float]
-    crossover_feature_selection_probability: typing.Optional[float]
+    excluded_feature_sets: list[list[str]]
+    initial_training_setup_generator_type: str
+    initial_training_setup_count: int
+    initial_training_top_n_selection_count: int
+    mutation_and_crossover_iteration: int
+    mutation_and_crossover_balance: float
+    mutation_feature_change_probability: float
+    crossover_feature_selection_probability: float
 
     @staticmethod
     def from_dict(**data: dict) -> "MorseParameters":
