@@ -4,7 +4,7 @@ import pandas
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from sklearn.model_selection import train_test_split
 from utils.training_result_utility import TrainingResultUtility
 
@@ -24,7 +24,7 @@ class TrainingManager(ABC):
     _y_test: DataFrame = None
 
     _pearson_correlation_matrix: DataFrame = None
-    _pearson_correlation_to_target_feature: DataFrame = None
+    _pearson_correlation_to_target_feature: Series = None
 
     def __init__(
         self,
@@ -35,7 +35,7 @@ class TrainingManager(ABC):
     def get_pearson_correlation_matrix(self) -> DataFrame:
         return self._pearson_correlation_matrix
 
-    def get_pearson_correlation_to_target_feature(self) -> DataFrame:
+    def get_pearson_correlation_to_target_feature(self) -> Series:
         return self._pearson_correlation_to_target_feature
 
     def get_test_dataset(self):
@@ -83,8 +83,8 @@ class TrainingManager(ABC):
             ].astype(int)
 
             print("Calculate pearson correlation matrix.")
-            self._pearson_correlation_matrix = train_dataset.corr()
-            self._pearson_correlation_to_target_feature: DataFrame = (
+            self._pearson_correlation_matrix = train_dataset.corr(numeric_only=True)
+            self._pearson_correlation_to_target_feature: Series = (
                 self._pearson_correlation_matrix[
                     self._training_parameters.target_feature
                 ]
@@ -99,8 +99,8 @@ class TrainingManager(ABC):
             y: DataFrame = dataset[self._training_parameters.target_feature].astype(int)
 
             print("Calculate pearson correlation matrix.")
-            self._pearson_correlation_matrix = dataset.corr()
-            self._pearson_correlation_to_target_feature: DataFrame = (
+            self._pearson_correlation_matrix = dataset.corr(numeric_only=True)
+            self._pearson_correlation_to_target_feature: Series = (
                 self._pearson_correlation_matrix[
                     self._training_parameters.target_feature
                 ]

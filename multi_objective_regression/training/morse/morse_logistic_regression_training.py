@@ -8,7 +8,7 @@ from dto.morse_training_results import MorseTrainingResults
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from sklearn.linear_model import LogisticRegression
 from training.objective_components import ObjectiveComponent
 from training.objective_components import (
@@ -32,7 +32,7 @@ class MorseLogisticRegressionTraining:
         self,
         index: int,
         training_setup: TrainingSetup,
-        pearson_correlation_to_target_feature: DataFrame,
+        pearson_correlation_to_target_feature: Series,
         x_train: DataFrame,
         y_train: DataFrame,
         x_validation: DataFrame,

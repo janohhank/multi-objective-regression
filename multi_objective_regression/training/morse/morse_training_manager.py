@@ -5,7 +5,7 @@ from copy import deepcopy
 from dto.training_parameters import TrainingParameters
 from dto.training_result import TrainingResult
 from dto.training_setup import TrainingSetup
-from training.morse.morese_logistic_regression_training import (
+from training.morse.morse_logistic_regression_training import (
     MorseLogisticRegressionTraining,
 )
 from training.morse.mutation_crossover_manager import MutationCrossoverManager
@@ -81,7 +81,7 @@ class MorseTrainingManager(TrainingManager):
 
     def __train_logistic_regression(
         self,
-        training_setups: dict[int, TrainingResult],
+        training_setups: dict[int, TrainingSetup],
     ) -> dict[int, TrainingResult]:
         train_results: dict[int, TrainingResult] = {}
         for index, training_setup in training_setups.items():

@@ -5,6 +5,7 @@ from dto.training_setup import TrainingSetup
 
 @dataclass
 class TrainingResult:
+    index: int
     # Contains the selected features, and training details
     training_setup: TrainingSetup
     # Metric results on the validation dataset

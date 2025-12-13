@@ -45,7 +45,7 @@ class MultiObjectiveTrainingApplication:
             elif algorithm == "DEAP":
                 training_manager = DeapTrainingManager(self.__training_parameters)
             else:
-                print(f"[ERROR] Unknown algorithm type: {algorithm.name}")
+                print(f"[ERROR] Unknown algorithm type: {algorithm}")
                 continue
             training_results.results[algorithm] = self.__start_training(
                 training_manager

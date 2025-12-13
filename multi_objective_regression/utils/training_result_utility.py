@@ -116,37 +116,3 @@ class TrainingResultUtility(ABC):
             training_result.scaler,
             os.path.join(training_datetime, folder, "scaler.pkl"),
         )
-
-    # TBD check this
-    @staticmethod
-    def save_training_results_report(
-        training_datetime: str,
-        training_results: dict[int, TrainingResult],
-        suggested_training_ids: list[int],
-    ) -> None:
-        with open(
-            os.path.join(
-                training_datetime,
-                "top_results_report.txt",
-            ),
-            "w",
-        ) as file:
-            file.write("Index, Validation MOS, Selected Features\n")
-            for index, training_result in sorted(
-                training_results.items(),
-                key=lambda item: item[1].validation_results["multi_objective_score"],
-                reverse=True,
-            ):
-                file.write(
-                    f"{index},{training_result.validation_results["multi_objective_score"]},[{training_result.training_setup.features}]\n"
-                )
-
-        with open(
-            os.path.join(
-                training_datetime,
-                "genetic_algorithm_report.txt",
-            ),
-            "w",
-        ) as file:
-            for training_id in suggested_training_ids:
-                file.write(f"{str(training_id)}\n")

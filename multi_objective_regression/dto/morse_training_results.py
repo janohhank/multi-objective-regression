@@ -7,7 +7,6 @@ from dto.training_setup import TrainingSetup
 
 @dataclass(kw_only=True)
 class MorseTrainingResults(TrainingResult):
-    index: int
     # Calculated regression coefficients
     coefficients: dict[str, float]
     # Calculated interception point
