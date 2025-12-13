@@ -1,14 +1,15 @@
-# multi_objective_machine_learning
+# Multi objective machine learning
 
 Binary classification-focused, multi-objective supervised machine learning with genetic feature selection.  
-The project provides:
+
+**The project provides**:
 - A custom MORSE meta-optimization algorithm for feature selection and model search
 - An NSGA-II implementation via DEAP
 - Multiple objective components (ROC-AUC, PR-AUC, F1, etc.) combined through user-defined weights
 - Reproducible, CLI-driven training and prediction pipelines
 
-Core model: scikit-learn LogisticRegression with z-score standardization.  
-Scope: Binary classification.
+**Core model**: scikit-learn LogisticRegression with z-score standardization.  
+**Scope**: Binary classification.
 
 ## Highlights
 - Multi-objective optimization over thresholded and score-based metrics:
@@ -21,30 +22,12 @@ Scope: Binary classification.
 - Automatic dataset split or use pre-defined splits
 - Saved artifacts: best model + scaler, JSON results, and PDF plots
 
-## Project structure
-- multi_objective_machine_learning/
-  - training_application.py — CLI training entrypoint
-  - predictor_application.py — CLI prediction/evaluation on a saved model
-  - dto/ — dataclasses (parameters, setups, results)
-  - training/
-    - objective_components.py — objective metrics and factory
-    - training_manager.py — dataset prep and flow
-    - deap/deap_training_manager.py — NSGA-II via DEAP
-    - morse/morse_training_manager.py — MORSE optimizer and training loop
-  - utils/
-    - plot_utility.py — ROC/PR/confusion and other plots
-    - training_result_utility.py — saving/merging results
-    - training_parameter_utility.py — parameter loading
-- test_data/
-  - diabetes.csv, diabetes_modified.csv
-  - test_train_configuration_diabetes.json — example training configuration
-
 ## Installation
-Requirements:
+**Requirements**:
 - Python 3.10+ (uses modern typing like `int | float`)
 - Recommended: virtual environment
 
-Install packages:
+**Install packages**:
 ```bash
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
@@ -58,7 +41,7 @@ Optional (for notebooks): `pip install jupyter`
 ## Configuration (JSON)
 Training is driven by a JSON file describing data sources, algorithms, objectives, and hyperparameters.
 
-Fields:
+**Fields**:
 - train_dataset: CSV path with features + binary target
 - validation_dataset (optional): CSV path; if omitted, split is created from train_dataset
 - test_dataset (optional): CSV path; if omitted, split is created from train_dataset
@@ -81,7 +64,7 @@ Fields:
   - Available names: accuracy, precision, recall, specificity, f1_score, roc_auc, pr_auc, gini, coefficient_sign_diff
   - Set weight to 0.0 to ignore a metric
 
-Example (provided):
+**Example (provided)**:
 ```json
 {
   "train_dataset": "../test_data/diabetes_modified.csv",
@@ -134,7 +117,7 @@ Example (provided):
 }
 ```
 
-Notes:
+**Notes**:
 - `coefficient_sign_diff` scores 1.0 when coefficient sign agrees with correlation sign across features (penalizes disagreement/near-zero agreement).
 - Thresholded metrics (accuracy/precision/recall/specificity/F1) default to 0.5 internally when evaluated at train/validation/test time. ROC/PR/Gini use continuous scores.
 
