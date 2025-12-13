@@ -88,13 +88,13 @@ class MorseLogisticRegressionTraining:
 
         return MorseTrainingResults(
             training_setup=training_setup,
-            validation_results=ModelEvaluationUtility.evaluate_log_regression(
+            validation_results=ModelEvaluationUtility.evaluate(
                 self.__objective_components.values(),
                 log_regression,
                 scaled_x_validation,
                 y_validation,
             ),
-            test_results=ModelEvaluationUtility.evaluate_log_regression(
+            test_results=ModelEvaluationUtility.evaluate(
                 self.__objective_components.values(),
                 log_regression,
                 scaled_x_test,

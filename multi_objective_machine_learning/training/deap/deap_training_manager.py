@@ -203,13 +203,13 @@ class DeapTrainingManager(TrainingManager):
                 features=selected_features,
                 target_feature=self._training_parameters.target_feature,
             ),
-            validation_results=ModelEvaluationUtility.evaluate_log_regression(
+            validation_results=ModelEvaluationUtility.evaluate(
                 self.__objective_components.values(),
                 log_regression,
                 scaled_x_validation,
                 self._y_validation,
             ),
-            test_results=ModelEvaluationUtility.evaluate_log_regression(
+            test_results=ModelEvaluationUtility.evaluate(
                 self.__objective_components.values(),
                 log_regression,
                 scaled_x_test,

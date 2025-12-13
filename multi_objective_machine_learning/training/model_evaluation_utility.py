@@ -11,7 +11,7 @@ from training.objective_components import (
 class ModelEvaluationUtility(ABC):
 
     @staticmethod
-    def evaluate_log_regression(
+    def evaluate(
         objective_components: list[ObjectiveComponent],
         model: Any,
         x: DataFrame,
